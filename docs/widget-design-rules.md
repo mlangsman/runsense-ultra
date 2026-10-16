@@ -8,7 +8,11 @@ Distilled from Anthropic's [MCP Apps design guidelines](https://claude.com/docs/
 - Put `<meta name="color-scheme" content="light dark">` in the head, or the browser paints an opaque white or black backdrop behind the frame. Also declare `color-scheme: light dark` on `:root` in CSS: the CSS compiler rewrites `light-dark()` fallbacks into helper variables that only switch on where it sees that declaration, and without it every fallback is an invalid colour.
 - Ask for a borderless frame with `_meta.ui.prefersBorder: false`. Claude web is borderless by default; mobile is bordered unless told otherwise.
 - Allow `https://assets.claude.ai` in `resourceDomains` so Anthropic Sans loads via `applyHostFonts`.
-- Style everything structural from the host variables: `--color-background-*`, `--color-text-*`, `--color-border-*`, `--font-*`, `--border-radius-*`, `--border-width-regular`. Our own colour is for accents only, and we have none yet.
+- Style everything structural from the host variables: `--color-background-*`, `--color-text-*`, `--color-border-*`, `--font-*`, `--border-radius-*`, `--border-width-regular`. Our own colour is for accents only.
+
+## Colour
+
+One accent: Claude's brand terracotta `#d97757` (the kit's Accent/Brand), used for what is ours and nothing structural: the route, the splits, the run pill. The kit's semantic tokens cover the rest: `--color-text-info` and `--color-background-info` for the ride pill, `--color-text-success` for the start marker. Text in an accent uses a darker (light) or lighter (dark) step so 12px labels pass 4.5:1; the raw accent is for marks only. Splits are a sequential ramp of the one hue, faster is darker, mixed towards the card surface with `color-mix`. Colour never carries meaning alone: pills have labels, the splits have axis ticks and a fastest/slowest caption, markers have position. Status colours (danger, warning) stay reserved for status.
 
 ## What each platform sends (checked 16 Oct 2026)
 
@@ -42,7 +46,7 @@ Colours checked against the kit's Color page, light and dark: every fallback in 
 
 ## Maps
 
-A static map: tile images placed by our own geometry with the route drawn over them in SVG, no pan or zoom inline. Tiles come from `basemaps.cartocdn.com` (`light_all` or `dark_all` to match the theme), which must be in `resourceDomains`, with the free CARTO key from `NEXT_PUBLIC_CARTO_API_KEY` on every tile (required since 25 Sep 2026, or the tile is a watermark). If there is no key or a tile fails, drop the tiles and keep the route on the card. Attribution "© OpenStreetMap © CARTO" in the corner.
+A static map: tile images placed by our own geometry with the route drawn over them in SVG, no pan or zoom inline. Tiles come from `basemaps.cartocdn.com` (`rastertiles/voyager`, the coloured style closest to the kit's map examples, in light; `dark_all` in dark, since Voyager has no dark variant), which must be in `resourceDomains`, with the free CARTO key from `NEXT_PUBLIC_CARTO_API_KEY` on every tile (required since 25 Sep 2026, or the tile is a watermark). If there is no key or a tile fails, drop the tiles and keep the route on the card. Attribution "© OpenStreetMap © CARTO" in the corner.
 
 ## Inline cards
 

@@ -72,7 +72,9 @@ export default function WorkoutWidget() {
     <main className="flex flex-col gap-3" style={frame}>
       <header className="flex flex-col gap-1">
         <div className="flex items-center gap-2">
-          <span className="rs-pill">{LABEL[w.sport]}</span>
+          <span className="rs-pill" data-sport={w.sport}>
+            {LABEL[w.sport]}
+          </span>
           <h1 className="rs-heading truncate">{w.name}</h1>
         </div>
         <span className="rs-small rs-secondary">
@@ -209,7 +211,8 @@ function StaticMap({
   const track = decodePolyline(polyline);
   const layout =
     width > 0 ? layoutStaticMap({ track, width, height, padding: 24 }) : null;
-  const style = dark ? "dark_all" : "light_all";
+  // Voyager is CARTO's coloured style, close to the maps in Anthropic's kit; it has no dark variant, so dark mode keeps Dark Matter under a coloured route.
+  const style = dark ? "dark_all" : "rastertiles/voyager";
   const showTiles = TILE_KEY !== "" && !tilesFailed;
   const start = layout?.path[0];
   const end = layout?.path[layout.path.length - 1];
@@ -251,7 +254,7 @@ function StaticMap({
               .map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`)
               .join(" ")}
             fill="none"
-            stroke="var(--rs-text)"
+            stroke="var(--rs-accent)"
             strokeWidth={3}
             strokeLinejoin="round"
             strokeLinecap="round"
@@ -261,7 +264,7 @@ function StaticMap({
               cx={start[0]}
               cy={start[1]}
               r={5}
-              fill="var(--rs-text)"
+              fill="var(--rs-success-text)"
               stroke="var(--rs-bg-tertiary)"
               strokeWidth={2}
             />
@@ -272,8 +275,8 @@ function StaticMap({
               cy={end[1]}
               r={5}
               fill="var(--rs-bg-tertiary)"
-              stroke="var(--rs-text)"
-              strokeWidth={2}
+              stroke="var(--rs-accent)"
+              strokeWidth={2.5}
             />
           )}
         </svg>
@@ -308,10 +311,12 @@ function SplitsChart({ splits }: { splits: Split[] }) {
           <div
             key={s.index}
             className="rs-bar"
-            data-fastest={s.paceSecPerKm === fastest}
-            style={{
-              height: `${30 + 70 * (1 - (s.paceSecPerKm - fastest) / spread)}%`,
-            }}
+            style={
+              {
+                height: `${30 + 70 * (1 - (s.paceSecPerKm - fastest) / spread)}%`,
+                "--rs-bar-strength": `${Math.round(35 + 65 * (1 - (s.paceSecPerKm - fastest) / spread))}%`,
+              } as React.CSSProperties
+            }
             title={`${s.index} km · ${formatPace(s.paceSecPerKm)} /km${s.avgHr != null ? ` · HR ${s.avgHr}` : ""}`}
           />
         ))}
