@@ -54,7 +54,7 @@ Principles the coach follows:
 
 ## Under the hood (not user facing)
 
-- **Our own database holds the user's workouts.** It is the source of truth, kept in sync from intervals.icu, so anything the user tells us can be linked to a specific workout by id, and summaries and metrics are computed from our copy rather than re-fetched.
+- **intervals.icu is the source of truth; we keep a light, rebuildable copy.** One row per workout with its intervals.icu id and summary fields (distance, time, pace, heart rate, elevation, load), so the log, charts, trends and volume checks are instant database queries. GPS, splits and laps are fetched on demand and cached with a time limit, never kept permanently. We store what we compute (best efforts, PBs) and what the user tells us (check-ins, niggles, goals, notes), each keyed to the workout, week or goal it belongs to. Disconnect deletes the copy; a re-sync rebuilds it.
 - **Tools the coach calls:** a summary of the last N workouts, the log for a week or month, one workout in detail, computed metrics and trends, personal bests, wellness for a period, and writes for check-ins, niggles, goals and notes.
 - **Widgets:** workout detail with map, splits and laps; the weekly and monthly log; the progress charts; a check-in form.
 - **Notifications:** email on new workout with an "open in Claude" link.

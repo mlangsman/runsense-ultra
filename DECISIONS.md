@@ -1,6 +1,6 @@
 # Decision log
 
-One line per decision, oldest first. Kept concise for the engineering write-up. A living copy is also kept as a Claude doc.
+One line per decision, oldest first. Kept concise for the engineering write-up. This file is the master copy and is updated in the same commit as the change it records; see CLAUDE.md.
 
 | Date | Decision | Why | Instead of |
 | --- | --- | --- | --- |
@@ -20,7 +20,7 @@ One line per decision, oldest first. Kept concise for the engineering write-up. 
 | 16 Oct 2026 | Multi-user: anyone can install it | intervals.icu OAuth per user, Supabase Auth as the OAuth 2.1 server Claude signs in with, row-level security from the first migration. Single user until Phase 1 | Single user only |
 | 16 Oct 2026 | Aim the portfolio piece at AI-lab and tech recruiters | Adds an eval harness in CI, a public repo from the first commit, a ChatGPT cross-host check, and a write-up on the decisions and how the AI tooling was directed | Chasing download counts |
 | 16 Oct 2026 | Build phases in the cloud, bootstrap and spike locally | Nothing needs the Mac now. One cloud session per phase opens a pull request while I am away; secrets never enter the repo | Everything local |
-| 16 Oct 2026 | Store users' workouts in our own database | Subjective data (how it felt, niggles, context) must link to a specific workout by id, and metrics are computed from our copy rather than re-fetched | Fetching from intervals.icu on every request |
+| 16 Oct 2026 | Keep a light, rebuildable copy: workout summaries, computed results and user notes, with detail fetched on demand | Summaries make the log, charts, trends and volume checks instant and let notes link by workout id; streams are rarely needed twice and holding them makes privacy and deletion heavier; intervals.icu stays the source of truth and already computes fitness, fatigue and form | Storing ids only and fetching everything live (slow, rate-limited, no cross-workout maths), or a full copy as source of truth |
 | 16 Oct 2026 | Goals set the coaching | The user states what they want (lose weight, feel better, a race time) and advice is shaped by it; evidence-based and conservative; niggles logged and trended, never diagnosed | A fixed coaching style |
 
 ## Still open

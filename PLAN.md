@@ -6,6 +6,7 @@ A Claude connector that turns a runner's watch data into an interactive coach in
 ## Key decisions
 - **Claude is the app.** Our MCP server supplies tools (data) and widgets (screens); Claude supplies chat, memory and voice. The Step 0 mocks become the widget designs.
 - **Data: intervals.icu via OAuth.** Users connect their own account; scopes limited to reading activities and wellness. Covers Garmin, Coros, Suunto, Polar and Wahoo. Strava stays out because its API bans AI use.
+- **Data we keep.** intervals.icu stays the source of truth. We store one summary row per workout, computed results such as best efforts, and what the user tells us. GPS, splits and laps are fetched on demand and cached with a time limit. The copy is rebuildable and dropped on disconnect.
 - **Stack, all TypeScript.** Next.js on Vercel using Vercel's official MCP Apps starter (mcp-handler plus the MCP Apps SDK), Supabase Postgres with row-level security so every row is owned by a user, Supabase Auth as the OAuth 2.1 server Claude signs users in with, Resend for email, pg_cron for scheduled sync. One monorepo: `packages/domain` for the shared model and maths, `apps/server` for everything else.
 - **One user first, multi-user data model from day one.** The spike and Phase 0 run on Marc's own key with no sign-in. But every table carries a user id with row-level security from the first migration, because that is cheap to do early and painful to retrofit. Accounts, per-user tokens encrypted at rest, rate limits, export and delete arrive in Phase 1.
 - **Maps.** Real tiles if Claude honours the widget's allowed domains, otherwise a monochrome vector map drawn from server-supplied data. The spike decides.
@@ -26,7 +27,7 @@ Each ends with something installable in Claude.
 Later: route generation, deeper analysis, Garmin direct, and a native app only if widgets prove limiting.
 
 ## How a run reaches a user
-Watch to Garmin to intervals.icu, then a webhook or the scheduled sync pulls it per user. The server ingests it, computes splits and bests, and emails the summary with a link. The link opens Claude, Claude calls the tool, and the widget renders.
+Watch to Garmin to intervals.icu, then a webhook or the scheduled sync pulls it per user. The server stores the summary, computes best efforts, and emails the summary with a link. The link opens Claude, Claude calls the tool, and the widget renders.
 
 ## Working method
 Bootstrap and the spike run locally. Phases 1 to 5 run as cloud sessions, one phase per session with the done criteria above, each opening a pull request that is reviewed locally. Secrets live in Vercel, Supabase and the cloud environment's settings, never in this repo.
