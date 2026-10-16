@@ -31,7 +31,7 @@ Later: route generation, deeper analysis, Garmin direct, and a native app only i
 Merged to main and deployed: `list_recent_workouts` and `get_workout`, the history and detail widgets, the map drawn from real GPS data, and tap-to-open from a history row. 66 tests, CI green. Rendering lessons are in DECISIONS.md.
 
 Waiting on Marc, in Claude on desktop and iPhone:
-1. Does the detail map show tiles, or the route alone with "Map tiles unavailable"?
+1. Tiles: desktop shows them, so `resourceDomains` works, but CARTO now needs a key. Set `NEXT_PUBLIC_CARTO_API_KEY` in Vercel (free, carto.com/basemaps/apikey) and redeploy. iPhone still to check.
 2. Does "Splits and laps" go full screen and "Back to chat" return?
 3. Does tapping a history row open the detail?
 Once both devices render, remove the four legacy widget alias URIs in `app/mcp/route.ts`.

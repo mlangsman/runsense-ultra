@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { layoutStaticMap, project } from "./map";
+import { layoutStaticMap, project, tileUrl } from "./map";
 import type { LatLng } from "./route";
 
 describe("project", () => {
@@ -98,5 +98,22 @@ describe("layoutStaticMap", () => {
     const map = layoutStaticMap({ track: [], width: 320, height: 200 });
     expect(map.tiles).toEqual([]);
     expect(map.path).toEqual([]);
+  });
+});
+
+describe("tileUrl", () => {
+  it("addresses a CARTO raster tile with the style and key", () => {
+    expect(
+      tileUrl({ z: 13, x: 4092, y: 2721 }, { style: "light_all", key: "abc" }),
+    ).toBe("https://basemaps.cartocdn.com/light_all/13/4092/2721.png?key=abc");
+  });
+
+  it("asks for 2x tiles on dense screens and escapes the key", () => {
+    expect(
+      tileUrl(
+        { z: 1, x: 0, y: 1 },
+        { style: "dark_all", retina: true, key: "a b&c" },
+      ),
+    ).toBe("https://basemaps.cartocdn.com/dark_all/1/0/1@2x.png?key=a%20b%26c");
   });
 });

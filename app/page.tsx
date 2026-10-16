@@ -41,12 +41,22 @@ export default function WorkoutsWidget() {
   // Tapping a row asks Claude for that workout; the detail widget follows.
   const open = async (row: WorkoutRow) => {
     try {
-      await app?.sendMessage({
+      const result = await app?.sendMessage({
         role: "user",
         content: [{ type: "text", text: openWorkoutMessage(row) }],
       });
+      // The host can advertise the capability and still refuse the message; tell the host's log rather than fail silently.
+      if (result?.isError) {
+        void app?.sendLog({
+          level: "warning",
+          data: "host declined ui/message",
+        });
+      }
     } catch (err) {
-      console.warn("[mcp-app] message failed:", err);
+      void app?.sendLog({
+        level: "error",
+        data: `ui/message failed: ${String(err)}`,
+      });
     }
   };
 
@@ -105,9 +115,9 @@ function Row({ w }: { w: WorkoutRow }) {
       <div className="min-w-0 flex-1 text-left">
         <div className="flex items-center gap-2">
           <span className="rs-pill">{LABEL[w.sport]}</span>
-          <span className="rs-emphasis truncate">{w.name}</span>
+          <span className="truncate">{w.name}</span>
         </div>
-        <div className="rs-caption truncate">{w.meta}</div>
+        <div className="rs-small rs-caption-color truncate">{w.meta}</div>
       </div>
     </>
   );
@@ -117,7 +127,7 @@ function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div>
       <div className="rs-caption">{label}</div>
-      <div className="rs-heading">{value}</div>
+      <div className="rs-emphasis">{value}</div>
     </div>
   );
 }
@@ -137,14 +147,13 @@ function Skeleton({ style }: { style: React.CSSProperties }) {
       </section>
       <ul className="rs-card flex flex-col px-4">
         {[0, 1, 2].map((i) => (
-          <li
-            key={i}
-            className={`flex items-center gap-4 py-3 ${i > 0 ? "rs-divider" : ""}`}
-          >
-            <div className="rs-skeleton h-8 w-10" />
-            <div className="flex flex-1 flex-col gap-2">
-              <div className="rs-skeleton h-3 w-40" />
-              <div className="rs-skeleton h-3 w-56" />
+          <li key={i} className={i > 0 ? "rs-divider" : ""}>
+            <div className="rs-row">
+              <div className="rs-skeleton h-8 w-10" />
+              <div className="flex flex-1 flex-col gap-2">
+                <div className="rs-skeleton h-3 w-40" />
+                <div className="rs-skeleton h-3 w-56" />
+              </div>
             </div>
           </li>
         ))}

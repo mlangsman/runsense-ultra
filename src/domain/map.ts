@@ -114,3 +114,21 @@ function project0Bounds(track: LatLng[]) {
   }
   return { minX, minY, maxX, maxY };
 }
+
+export interface TileUrlOptions {
+  /** CARTO style name, for instance `light_all` or `dark_all`. */
+  style: string;
+  /** Request 512px tiles for high-density screens. */
+  retina?: boolean;
+  /** CARTO basemaps key; required since 25 Sep 2026 or tiles come back watermarked. */
+  key: string;
+}
+
+/** The address of one CARTO raster tile. */
+export function tileUrl(
+  { z, x, y }: Pick<Tile, "z" | "x" | "y">,
+  opts: TileUrlOptions,
+): string {
+  const size = opts.retina ? "@2x" : "";
+  return `https://basemaps.cartocdn.com/${opts.style}/${z}/${x}/${y}${size}.png?key=${encodeURIComponent(opts.key)}`;
+}

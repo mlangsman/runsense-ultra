@@ -1,63 +1,25 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { useMemo, useState } from "react";
+import {
+  useApp,
+  useHostFonts,
+  useHostStyleVariables,
+} from "@modelcontextprotocol/ext-apps/react";
 import type { App, McpUiHostContext } from "@modelcontextprotocol/ext-apps";
 
-// ---------------------------------------------------------------------------
-// Session-persistent singleton App instance.
-//
-// The MCP host establishes a single bridge per iframe. We create the App once
-// and share it across all pages. Tool data is persisted to sessionStorage so
-// it survives client-side navigations, module re-evaluations (HMR), and
-// forward/back browser history.
-// ---------------------------------------------------------------------------
+/**
+ * The host bridge, built on the SDK's own React hooks as the MCP Apps plugin
+ * recommends: `useApp` creates and connects the App (handlers registered
+ * before connect), `useHostStyleVariables` and `useHostFonts` apply the
+ * host's theme, tokens and Anthropic Sans. This file only adds what the
+ * widgets read: the tool result and a small, typed view of the host context.
+ */
 
-const STORAGE = {
-  INPUT: "__mcp_tool_input",
-  RESULT: "__mcp_tool_result",
-  CONNECTED: "__mcp_connected",
-} as const;
-
-function read<T>(key: string): T | null {
-  try {
-    const raw = sessionStorage.getItem(key);
-    return raw ? (JSON.parse(raw) as T) : null;
-  } catch {
-    return null;
-  }
-}
-
-function write(key: string, value: unknown): void {
-  try {
-    if (value == null) sessionStorage.removeItem(key);
-    else sessionStorage.setItem(key, JSON.stringify(value));
-  } catch {
-    /* sessionStorage may be unavailable in some sandboxes */
-  }
-}
-
-// ---------------------------------------------------------------------------
-// In-memory cache (fast path, avoids JSON.parse on every render)
-// ---------------------------------------------------------------------------
-
-let memConnected = read<boolean>(STORAGE.CONNECTED) ?? false;
-let memToolInput = read<Record<string, unknown>>(STORAGE.INPUT);
-let memToolResult = read<Record<string, unknown>>(STORAGE.RESULT);
 const NO_INSETS = { top: 0, right: 0, bottom: 0, left: 0 };
-let memHost: HostInfo = {
-  theme: null,
-  hostStyles: false,
-  platform: null,
-  displayMode: null,
-  availableDisplayModes: null,
-  safeArea: NO_INSETS,
-  canMessage: false,
-};
 
 export interface HostInfo {
   theme: "light" | "dark" | null;
-  /** True when the host supplied its own CSS variables for theming. */
-  hostStyles: boolean;
   platform: string | null;
   displayMode: string | null;
   /** What the host can switch to; null when it did not say. */
@@ -68,142 +30,98 @@ export interface HostInfo {
   canMessage: boolean;
 }
 
-const listeners = new Set<() => void>();
-function notify() {
-  for (const l of listeners) l();
-}
-function subscribe(listener: () => void) {
-  listeners.add(listener);
-  return () => listeners.delete(listener);
-}
+const INITIAL_HOST: HostInfo = {
+  theme: null,
+  platform: null,
+  displayMode: null,
+  availableDisplayModes: null,
+  safeArea: NO_INSETS,
+  canMessage: false,
+};
 
-// ---------------------------------------------------------------------------
-// Theme: take the host's theme and style variables when it offers them, so
-// the widget blends into the conversation instead of sitting beside it.
-// ---------------------------------------------------------------------------
-
-async function applyHostContext(ctx: McpUiHostContext | undefined) {
-  if (!ctx) return;
-  const { applyDocumentTheme, applyHostStyleVariables, applyHostFonts } =
-    await import("@modelcontextprotocol/ext-apps");
-  if (ctx.theme) applyDocumentTheme(ctx.theme);
-  const variables = ctx.styles?.variables;
-  if (variables && Object.keys(variables).length > 0) {
-    applyHostStyleVariables(variables);
-  }
-  const fonts = ctx.styles?.css?.fonts;
-  if (fonts) applyHostFonts(fonts);
+/** Merge a host context notification (always partial) into what we know. */
+function mergeHost(
+  prev: HostInfo,
+  ctx: McpUiHostContext | undefined,
+): HostInfo {
+  if (!ctx) return prev;
   const insets = ctx.safeAreaInsets as Partial<typeof NO_INSETS> | undefined;
-  memHost = {
-    ...memHost,
-    theme: ctx.theme ?? memHost.theme,
-    hostStyles:
-      memHost.hostStyles || (!!variables && Object.keys(variables).length > 0),
-    platform:
-      typeof ctx.platform === "string" ? ctx.platform : memHost.platform,
+  return {
+    ...prev,
+    theme: ctx.theme ?? prev.theme,
+    platform: typeof ctx.platform === "string" ? ctx.platform : prev.platform,
     displayMode:
-      typeof ctx.displayMode === "string"
-        ? ctx.displayMode
-        : memHost.displayMode,
+      typeof ctx.displayMode === "string" ? ctx.displayMode : prev.displayMode,
     availableDisplayModes: Array.isArray(ctx.availableDisplayModes)
       ? (ctx.availableDisplayModes as string[])
-      : memHost.availableDisplayModes,
-    safeArea: insets ? { ...NO_INSETS, ...insets } : memHost.safeArea,
+      : prev.availableDisplayModes,
+    safeArea: insets ? { ...NO_INSETS, ...insets } : prev.safeArea,
   };
-  notify();
 }
 
-// ---------------------------------------------------------------------------
-// Singleton connection
-// ---------------------------------------------------------------------------
+type ToolData = Record<string, unknown> | null;
 
-let singletonApp: App | null = null;
-
-async function ensureConnected() {
-  if (singletonApp) return;
-
-  const { App } = await import("@modelcontextprotocol/ext-apps");
-
-  const app = new App(
-    { name: "runsense-widget", version: "0.1.0" },
-    {},
-    { autoResize: true },
-  );
-
-  app.ontoolinput = (params) => {
-    memToolInput = params.arguments ?? null;
-    write(STORAGE.INPUT, memToolInput);
-    notify();
-  };
-
-  app.ontoolresult = (result) => {
-    memToolResult =
-      (result.structuredContent as Record<string, unknown>) ?? null;
-    write(STORAGE.RESULT, memToolResult);
-    notify();
-  };
-
-  app.onhostcontextchanged = (ctx) => {
-    void applyHostContext(ctx);
-  };
-
-  app.onerror = (error) => {
-    console.error("[mcp-app] error:", error);
-  };
-
+/**
+ * A tool result left in sessionStorage by `scripts/` renders, so a widget can
+ * be checked headless with fixture data. Never set inside Claude.
+ */
+const RENDER_FIXTURE_KEY = "__mcp_tool_result";
+function renderFixture(): ToolData {
   try {
-    await app.connect();
-    singletonApp = app;
-    memConnected = true;
-    write(STORAGE.CONNECTED, true);
-    memHost = {
-      ...memHost,
-      canMessage: app.getHostCapabilities()?.message != null,
-    };
-    notify();
-    void applyHostContext(app.getHostContext());
-  } catch (err) {
-    console.warn("[mcp-app] connect failed (not in MCP host?):", err);
+    const raw = sessionStorage.getItem(RENDER_FIXTURE_KEY);
+    return raw ? (JSON.parse(raw) as ToolData) : null;
+  } catch {
+    return null;
   }
 }
 
-// Kick off connection once (module-level, guarded)
-if (typeof window !== "undefined" && window.self !== window.top) {
-  ensureConnected();
-}
-
-// ---------------------------------------------------------------------------
-// Hook
-// ---------------------------------------------------------------------------
-
-/**
- * React hook that provides the MCP Apps bridge state.
- *
- * The underlying `App` instance is a singleton — created once when the module
- * loads inside an iframe. Tool data is persisted to `sessionStorage` so it
- * survives navigations and module re-evaluations.
- */
 export function useMcpApp() {
-  const connected = useSyncExternalStore(
-    subscribe,
-    () => memConnected,
-    () => false,
-  );
-  const toolInput = useSyncExternalStore(
-    subscribe,
-    () => memToolInput,
-    () => null,
-  );
-  const toolResult = useSyncExternalStore(
-    subscribe,
-    () => memToolResult,
-    () => null,
-  );
-  const host = useSyncExternalStore(
-    subscribe,
-    () => memHost,
-    () => memHost,
+  const [toolInput, setToolInput] = useState<ToolData>(null);
+  const [toolResult, setToolResult] = useState<ToolData>(null);
+  // The SDK merges every host context change into app.getHostContext(); we only need to re-render when one lands.
+  const [contextVersion, setContextVersion] = useState(0);
+  const [fixture] = useState<ToolData>(() =>
+    typeof window === "undefined" ? null : renderFixture(),
   );
 
-  return { app: singletonApp, connected, toolInput, toolResult, host };
+  const { app, isConnected, error } = useApp({
+    appInfo: { name: "runsense-widget", version: "0.1.0" },
+    capabilities: {},
+    onAppCreated: (app: App) => {
+      // All handlers go on before connect, per the SDK's lifecycle rules.
+      app.ontoolinput = (params) => setToolInput(params.arguments ?? null);
+      app.ontoolresult = (result) =>
+        setToolResult((result.structuredContent as ToolData) ?? null);
+      app.addEventListener("hostcontextchanged", () =>
+        setContextVersion((n) => n + 1),
+      );
+      // Nothing to flush: every bit of state came from the tool result.
+      app.onteardown = async () => ({});
+      app.onerror = (err) => console.error("[mcp-app] error:", err);
+    },
+  });
+
+  useHostStyleVariables(app, app?.getHostContext());
+  useHostFonts(app, app?.getHostContext());
+
+  const host = useMemo<HostInfo>(
+    () => ({
+      ...mergeHost(INITIAL_HOST, app?.getHostContext()),
+      canMessage: app?.getHostCapabilities()?.message != null,
+    }),
+    // contextVersion is the signal that getHostContext() has new content.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [app, contextVersion],
+  );
+
+  if (error) console.warn("[mcp-app] not connected to a host:", error.message);
+
+  return {
+    app,
+    connected: isConnected,
+    toolInput,
+    // Outside a host (a headless render) fall back to the fixture a script left behind.
+    toolResult: toolResult ?? (error ? fixture : null),
+    host,
+  };
 }
