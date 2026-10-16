@@ -41,10 +41,12 @@ export default function WorkoutsWidget() {
   // Tapping a row asks Claude for that workout; the detail widget follows.
   const open = async (row: WorkoutRow) => {
     try {
-      await app?.sendMessage({
+      const result = await app?.sendMessage({
         role: "user",
         content: [{ type: "text", text: openWorkoutMessage(row) }],
       });
+      // The host can advertise the capability and still refuse the message; say so rather than fail silently.
+      if (result?.isError) console.warn("[mcp-app] host declined the message");
     } catch (err) {
       console.warn("[mcp-app] message failed:", err);
     }
@@ -137,14 +139,13 @@ function Skeleton({ style }: { style: React.CSSProperties }) {
       </section>
       <ul className="rs-card flex flex-col px-4">
         {[0, 1, 2].map((i) => (
-          <li
-            key={i}
-            className={`flex items-center gap-4 py-3 ${i > 0 ? "rs-divider" : ""}`}
-          >
-            <div className="rs-skeleton h-8 w-10" />
-            <div className="flex flex-1 flex-col gap-2">
-              <div className="rs-skeleton h-3 w-40" />
-              <div className="rs-skeleton h-3 w-56" />
+          <li key={i} className={i > 0 ? "rs-divider" : ""}>
+            <div className="rs-row">
+              <div className="rs-skeleton h-8 w-10" />
+              <div className="flex flex-1 flex-col gap-2">
+                <div className="rs-skeleton h-3 w-40" />
+                <div className="rs-skeleton h-3 w-56" />
+              </div>
             </div>
           </li>
         ))}

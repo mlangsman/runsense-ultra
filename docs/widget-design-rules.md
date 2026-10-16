@@ -29,13 +29,14 @@ Three sizes only: heading, body, caption. Two weights: regular and emphasised. A
 
 ## Maps
 
-A static map: tile images placed by our own geometry with the route drawn over them in SVG, no pan or zoom inline. Tiles come from `basemaps.cartocdn.com` (`light_all` or `dark_all` to match the theme), which must be in `resourceDomains`. If a tile fails, drop the tiles and keep the route on the card. Attribution "© OpenStreetMap © CARTO" in the corner.
+A static map: tile images placed by our own geometry with the route drawn over them in SVG, no pan or zoom inline. Tiles come from `basemaps.cartocdn.com` (`light_all` or `dark_all` to match the theme), which must be in `resourceDomains`, with the free CARTO key from `NEXT_PUBLIC_CARTO_API_KEY` on every tile (required since 25 Sep 2026, or the tile is a watermark). If there is no key or a tile fails, drop the tiles and keep the route on the card. Attribution "© OpenStreetMap © CARTO" in the corner.
 
 ## Inline cards
 
 - Height fits content. No nested vertical scrolling; the conversation owns it and the host caps inline height.
 - At most two actions, at the bottom. At most four or five data points. No drill-ins, breadcrumbs or multiple views.
 - Visible controls only: segmented buttons, chips, inline tabs. No dropdowns, menus or popovers.
+- A row that opens something is one edge-to-edge button with a hover fill, and it works by sending a chat message (`ui/message`) so Claude renders the next widget. Only render it as a button when the host advertises the `message` capability; otherwise show plain rows, so nothing looks clickable that is not.
 - Anything needing its own scroll goes to full screen via `ui/request-display-mode`.
 
 ## Mobile

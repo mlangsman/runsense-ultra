@@ -13,7 +13,7 @@ import {
 import type { WorkoutRow } from "@/src/domain/summary";
 import type { Split } from "@/src/domain/splits";
 import { decodePolyline } from "@/src/domain/route";
-import { layoutStaticMap } from "@/src/domain/map";
+import { layoutStaticMap, tileUrl } from "@/src/domain/map";
 
 interface WorkoutDetailResult {
   workout: Workout;
@@ -22,6 +22,13 @@ interface WorkoutDetailResult {
   splits: Split[];
   laps: Lap[];
 }
+
+/**
+ * CARTO has required a key on every raster tile since 25 Sep 2026; without one
+ * the tiles come back as an "API KEY REQUIRED" watermark. Inlined at build
+ * time; with no key the route draws on a plain card.
+ */
+const TILE_KEY = process.env.NEXT_PUBLIC_CARTO_API_KEY ?? "";
 
 const LABEL: Record<Workout["sport"], string> = {
   run: "Run",
@@ -74,7 +81,7 @@ export default function WorkoutWidget() {
         <StaticMap
           polyline={polyline}
           height={fullscreen ? 360 : 200}
-          dark={host.theme === "dark"}
+          theme={host.theme}
         />
       )}
 
@@ -156,39 +163,51 @@ function Stat({ label, value }: { label: string; value: string }) {
 /**
  * Tiles behind an SVG route. The tile grid and the route's pixel path come
  * from the domain maths; this component only measures the frame and places
- * images. If a tile fails to load (for instance, blocked by the host's content
- * policy) the tiles are dropped and the route stays on a plain card, so the
- * widget degrades to a vector map rather than breaking.
+ * images. If there is no tile key, or a tile fails to load (for instance,
+ * blocked by the host's content policy), the tiles are dropped and the route
+ * stays on a plain card, so the widget degrades to a vector map rather than
+ * breaking.
  */
 function StaticMap({
   polyline,
   height,
-  dark,
+  theme,
 }: {
   polyline: string;
   height: number;
-  dark: boolean;
+  /** The host's theme; null when it sends none (iPhone), so the tiles follow the OS like the rest of the widget. */
+  theme: "light" | "dark" | null;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(0);
   const [tilesFailed, setTilesFailed] = useState(false);
   const [retina, setRetina] = useState(false);
+  const [osDark, setOsDark] = useState(false);
+  const dark = theme ? theme === "dark" : osDark;
 
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
     setRetina(window.devicePixelRatio > 1);
+    const scheme = window.matchMedia("(prefers-color-scheme: dark)");
+    setOsDark(scheme.matches);
+    const onScheme = (e: MediaQueryListEvent) => setOsDark(e.matches);
+    scheme.addEventListener("change", onScheme);
     const measure = () => setWidth(el.clientWidth);
     measure();
     const observer = new ResizeObserver(measure);
     observer.observe(el);
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      scheme.removeEventListener("change", onScheme);
+    };
   }, []);
 
   const track = decodePolyline(polyline);
   const layout =
     width > 0 ? layoutStaticMap({ track, width, height, padding: 24 }) : null;
   const style = dark ? "dark_all" : "light_all";
+  const showTiles = TILE_KEY !== "" && !tilesFailed;
   const start = layout?.path[0];
   const end = layout?.path[layout.path.length - 1];
 
@@ -200,14 +219,14 @@ function StaticMap({
       aria-label="Route map"
     >
       {layout &&
-        !tilesFailed &&
+        showTiles &&
         layout.tiles.map((t) => (
           // Raw map tiles from the provider: next/image would proxy them through Vercel for nothing.
           // eslint-disable-next-line @next/next/no-img-element
           <img
             key={`${t.z}/${t.x}/${t.y}`}
             alt=""
-            src={`https://basemaps.cartocdn.com/${style}/${t.z}/${t.x}/${t.y}${retina ? "@2x" : ""}.png`}
+            src={tileUrl(t, { style, retina, key: TILE_KEY })}
             style={{ left: t.left, top: t.top }}
             onError={() => setTilesFailed(true)}
           />
@@ -256,7 +275,7 @@ function StaticMap({
           )}
         </svg>
       )}
-      {!tilesFailed && (
+      {showTiles && (
         <span className="rs-map-attribution">© OpenStreetMap © CARTO</span>
       )}
       {tilesFailed && (
