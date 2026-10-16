@@ -43,12 +43,14 @@ function write(key: string, value: unknown): void {
 let memConnected = read<boolean>(STORAGE.CONNECTED) ?? false;
 let memToolInput = read<Record<string, unknown>>(STORAGE.INPUT);
 let memToolResult = read<Record<string, unknown>>(STORAGE.RESULT);
-let memHost: HostInfo = { theme: null, hostStyles: false };
+let memHost: HostInfo = { theme: null, hostStyles: false, debug: "" };
 
 export interface HostInfo {
   theme: "light" | "dark" | null;
   /** True when the host supplied its own CSS variables for theming. */
   hostStyles: boolean;
+  /** Temporary: what the host sent, so we can match its look by evidence. */
+  debug: string;
 }
 
 const listeners = new Set<() => void>();
@@ -76,9 +78,19 @@ async function applyHostContext(ctx: McpUiHostContext | undefined) {
   }
   const fonts = ctx.styles?.css?.fonts;
   if (fonts) applyHostFonts(fonts);
+  const { styles: _styles, ...rest } = ctx;
   memHost = {
     theme: ctx.theme ?? null,
     hostStyles: !!variables && Object.keys(variables).length > 0,
+    debug: JSON.stringify(
+      {
+        context: rest,
+        fontsCss: fonts ? `${fonts.length} chars` : null,
+        variables: variables ?? null,
+      },
+      null,
+      1,
+    ),
   };
   notify();
 }

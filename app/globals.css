@@ -1,12 +1,11 @@
 @import "tailwindcss";
 
 /*
- * Design tokens. Each one prefers the host's variable (set on <html> by the
- * MCP Apps bridge when Claude provides its theme) and falls back to our own
- * grayscale palette, which follows the host theme or the OS preference.
+ * Design tokens. Each prefers the host's variable, which Claude sets on <html>
+ * through the MCP Apps bridge, and falls back to our own grayscale palette.
  */
 :root {
-  --rs-fallback-bg-2: #ffffff;
+  --rs-fallback-bg-1: #ffffff;
   --rs-fallback-bg-3: #f1f1ef;
   --rs-fallback-text-1: #1a1a1a;
   --rs-fallback-text-2: #5f5f5c;
@@ -17,7 +16,7 @@
 }
 
 [data-theme="dark"] {
-  --rs-fallback-bg-2: #1f1f1d;
+  --rs-fallback-bg-1: #1c1c1a;
   --rs-fallback-bg-3: #2a2a28;
   --rs-fallback-text-1: #ececea;
   --rs-fallback-text-2: #a7a7a3;
@@ -29,7 +28,7 @@
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --rs-fallback-bg-2: #1f1f1d;
+    --rs-fallback-bg-1: #1c1c1a;
     --rs-fallback-bg-3: #2a2a28;
     --rs-fallback-text-1: #ececea;
     --rs-fallback-text-2: #a7a7a3;
@@ -41,47 +40,67 @@
 }
 
 :root {
-  --rs-surface: var(--color-background-secondary, var(--rs-fallback-bg-2));
+  --rs-bg: var(--color-background-primary, var(--rs-fallback-bg-1));
   --rs-surface-muted: var(--color-background-tertiary, var(--rs-fallback-bg-3));
   --rs-text: var(--color-text-primary, var(--rs-fallback-text-1));
   --rs-text-muted: var(--color-text-secondary, var(--rs-fallback-text-2));
   --rs-text-faint: var(--color-text-tertiary, var(--rs-fallback-text-3));
-  --rs-border: var(--color-border-secondary, var(--rs-fallback-border));
+  --rs-hairline: var(--color-border-tertiary, var(--rs-fallback-border));
   --rs-inverse-bg: var(
     --color-background-inverse,
     var(--rs-fallback-inverse-bg)
   );
   --rs-inverse-text: var(--color-text-inverse, var(--rs-fallback-inverse-text));
-  --rs-radius: var(--border-radius-lg, 12px);
   --rs-radius-sm: var(--border-radius-sm, 6px);
-  --rs-font: var(
-    --font-sans,
-    -apple-system,
-    system-ui,
-    "Helvetica Neue",
-    sans-serif
-  );
+  --rs-font: var(--font-sans, -apple-system, system-ui, sans-serif);
+  --rs-text-xs: var(--font-text-xs-size, 12px);
+  --rs-text-sm: var(--font-text-sm-size, 14px);
+  --rs-text-md: var(--font-text-md-size, 16px);
+  --rs-heading-sm: var(--font-heading-sm-size, 18px);
+  --rs-weight-medium: var(--font-weight-medium, 500);
+  --rs-weight-semibold: var(--font-weight-semibold, 600);
 }
 
-/* Transparent so the widget sits on the host's own card. */
+/*
+ * The host frames the widget in its own card, so we paint its primary
+ * background and add no chrome of our own: flat rows with hairlines.
+ */
 html,
 body {
-  background: transparent;
+  background: var(--rs-bg);
   color: var(--rs-text);
   font-family: var(--rs-font);
+  font-size: var(--rs-text-sm);
   -webkit-font-smoothing: antialiased;
 }
 
-.rs-card {
-  background: var(--rs-surface);
-  border: 1px solid var(--rs-border);
-  border-radius: var(--rs-radius);
-}
 .rs-muted {
   color: var(--rs-text-muted);
 }
 .rs-faint {
   color: var(--rs-text-faint);
+}
+.rs-hairline {
+  border-color: var(--rs-hairline);
+}
+.rs-heading {
+  font-size: var(--rs-heading-sm);
+  font-weight: var(--rs-weight-semibold);
+  letter-spacing: -0.01em;
+}
+.rs-stat {
+  font-size: var(--rs-text-md);
+  font-weight: var(--rs-weight-semibold);
+}
+.rs-label {
+  font-size: var(--rs-text-xs);
+  color: var(--rs-text-muted);
+}
+.rs-xs {
+  font-size: var(--rs-text-xs);
+}
+.rs-medium {
+  font-weight: var(--rs-weight-medium);
 }
 .rs-badge {
   border-radius: var(--rs-radius-sm);

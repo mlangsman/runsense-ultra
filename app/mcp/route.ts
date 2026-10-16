@@ -11,7 +11,7 @@ import { summarise, toWorkoutRow } from "@/src/domain/summary";
 import { getRecentWorkouts } from "@/src/services/recentWorkouts";
 import { intervalsIcuClientFromEnv } from "@/src/sources/intervals-icu/client";
 
-const UI_VERSION = "2026-10-16-2";
+const UI_VERSION = "2026-10-16-3";
 const RESOURCE_URI = `ui://runsense/workouts.html?v=${UI_VERSION}`;
 
 async function fetchPageHtml(path: string): Promise<string> {
