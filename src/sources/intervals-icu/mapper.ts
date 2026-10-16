@@ -82,10 +82,15 @@ export function toWorkout(a: IntervalsActivity): Workout {
   };
 }
 
-/** One entry of the streams response: a named series, one value per sample. */
+/**
+ * One entry of the streams response: a named series, one value per sample.
+ * The `latlng` stream is two series: `data` holds latitude and `data2`
+ * longitude, both null before the watch has a GPS fix.
+ */
 export interface IntervalsStream {
   type: string;
   data: unknown[];
+  data2?: unknown[] | null;
 }
 
 export interface ActivityStreams {
@@ -115,12 +120,31 @@ export function toStreams(raw: IntervalsStream[]): ActivityStreams {
     const name = STREAM_NAMES.find((n) => n === stream.type);
     if (!name) continue;
     if (name === "latlng") {
-      out.latlng = stream.data as LatLng[];
+      const track = pairLatLng(stream.data, stream.data2);
+      if (track) out.latlng = track;
     } else {
       out[name] = stream.data as number[];
     }
   }
   return out;
+}
+
+const isCoordinate = (v: unknown): v is number =>
+  typeof v === "number" && Number.isFinite(v);
+
+/** Zip the two series into points, skipping samples without a fix. */
+function pairLatLng(
+  lat: unknown[],
+  lng: unknown[] | null | undefined,
+): LatLng[] | undefined {
+  if (!Array.isArray(lng)) return undefined;
+  const points: LatLng[] = [];
+  for (let i = 0; i < lat.length; i++) {
+    const a = lat[i];
+    const b = lng[i];
+    if (isCoordinate(a) && isCoordinate(b)) points.push([a, b]);
+  }
+  return points;
 }
 
 /** One interval of an activity: a watch lap, or a work/recovery block. */
