@@ -10,16 +10,16 @@ const okFetch = (body: unknown, status = 200) =>
       }),
   );
 
+const make = (fetch: typeof globalThis.fetch) =>
+  createIntervalsIcuClient({ apiKey: "secret", athleteId: "i42", fetch });
+
+const calledUrl = (fetch: ReturnType<typeof okFetch>) =>
+  (fetch.mock.calls[0] as unknown as [string])[0];
+
 describe("intervals.icu client", () => {
   it("lists activities for a date range with basic auth", async () => {
     const fetch = okFetch([{ id: "i1" }]);
-    const client = createIntervalsIcuClient({
-      apiKey: "secret",
-      athleteId: "i42",
-      fetch,
-    });
-
-    const result = await client.listActivities({
+    const result = await make(fetch).listActivities({
       oldest: "2026-10-01",
       newest: "2026-10-16",
     });
@@ -35,18 +35,41 @@ describe("intervals.icu client", () => {
     );
   });
 
-  it("throws a typed error with the status on failure", async () => {
-    const client = createIntervalsIcuClient({
-      apiKey: "bad",
-      athleteId: "i42",
-      fetch: okFetch({ error: "nope" }, 401),
-    });
+  it("gets one activity by id", async () => {
+    const fetch = okFetch({ id: "i7" });
+    expect(await make(fetch).getActivity("i7")).toEqual({ id: "i7" });
+    expect(calledUrl(fetch)).toBe("https://intervals.icu/api/v1/activity/i7");
+  });
 
-    await expect(
-      client.listActivities({ oldest: "2026-10-01", newest: "2026-10-16" }),
-    ).rejects.toBeInstanceOf(IntervalsIcuError);
-    await expect(
-      client.listActivities({ oldest: "2026-10-01", newest: "2026-10-16" }),
-    ).rejects.toMatchObject({ status: 401 });
+  it("gets the chosen streams", async () => {
+    const fetch = okFetch([{ type: "time", data: [0, 1] }]);
+    await make(fetch).getStreams("i7", ["time", "latlng"]);
+    expect(calledUrl(fetch)).toBe(
+      "https://intervals.icu/api/v1/activity/i7/streams?types=time%2Clatlng",
+    );
+  });
+
+  it("gets the intervals", async () => {
+    const fetch = okFetch({ icu_intervals: [] });
+    await make(fetch).getIntervals("i7");
+    expect(calledUrl(fetch)).toBe(
+      "https://intervals.icu/api/v1/activity/i7/intervals",
+    );
+  });
+
+  it("throws a typed error with the status on failure", async () => {
+    const client = make(okFetch({ error: "nope" }, 401));
+    const call = () =>
+      client.listActivities({ oldest: "2026-10-01", newest: "2026-10-16" });
+    await expect(call()).rejects.toBeInstanceOf(IntervalsIcuError);
+    await expect(call()).rejects.toMatchObject({ status: 401 });
+  });
+
+  it("escapes the activity id in the path", async () => {
+    const fetch = okFetch({});
+    await make(fetch).getActivity("a/b");
+    expect(calledUrl(fetch)).toBe(
+      "https://intervals.icu/api/v1/activity/a%2Fb",
+    );
   });
 });

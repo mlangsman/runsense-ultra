@@ -1,6 +1,14 @@
 import { describe, expect, it } from "vitest";
 import fixture from "./__fixtures__/activities.json";
-import { toWorkout, type IntervalsActivity } from "./mapper";
+import streamsFixture from "./__fixtures__/streams.json";
+import intervalsFixture from "./__fixtures__/intervals.json";
+import {
+  toLap,
+  toStreams,
+  toWorkout,
+  type IntervalsActivity,
+  type IntervalsStream,
+} from "./mapper";
 
 const byId = (id: string) =>
   fixture.find((a) => a.id === id) as unknown as IntervalsActivity;
@@ -51,5 +59,58 @@ describe("toWorkout", () => {
   it("maps unknown sports to other", () => {
     const raw = { ...byId("i1003"), type: "Kitesurf" };
     expect(toWorkout(raw).sport).toBe("other");
+  });
+});
+
+describe("toStreams", () => {
+  it("picks the streams we use by name", () => {
+    const s = toStreams(streamsFixture as IntervalsStream[]);
+    expect(s.time?.length).toBe(420);
+    expect(s.distance?.[419]).toBe(12577.6);
+    expect(s.latlng?.[0]).toEqual([51.4525, -0.2715]);
+    expect(s.heartrate?.length).toBe(420);
+    expect(s.altitude?.length).toBe(420);
+  });
+
+  it("leaves missing streams undefined", () => {
+    const s = toStreams([{ type: "time", data: [0, 1] }]);
+    expect(s.time).toEqual([0, 1]);
+    expect(s.latlng).toBeUndefined();
+    expect(s.distance).toBeUndefined();
+  });
+
+  it("ignores a stream whose data is not an array", () => {
+    const s = toStreams([
+      { type: "time", data: "oops" as unknown as number[] },
+    ]);
+    expect(s.time).toBeUndefined();
+  });
+});
+
+describe("toLap", () => {
+  it("maps a watch lap with its distance, times and heart rate", () => {
+    const lap = toLap(intervalsFixture.icu_intervals[0], 0);
+    expect(lap).toMatchObject({
+      index: 1,
+      kind: "work",
+      distanceM: 1013.8,
+      movingSec: 320,
+      elapsedSec: 320,
+      avgHr: 153,
+      maxHr: 158,
+    });
+    expect(lap.name).toBeNull();
+    expect(lap.cadenceSpm).toBe(156);
+    expect(lap.elevationGainM).toBeCloseTo(10.4, 1);
+  });
+
+  it("keeps a label and a recovery type when the source has them", () => {
+    const lap = toLap(
+      { ...intervalsFixture.icu_intervals[1], type: "RECOVERY", label: "Jog" },
+      1,
+    );
+    expect(lap.kind).toBe("recovery");
+    expect(lap.name).toBe("Jog");
+    expect(lap.index).toBe(2);
   });
 });
