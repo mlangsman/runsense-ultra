@@ -7,7 +7,7 @@ A Claude connector that turns a runner's watch data into an interactive coach in
 - **Claude is the app.** Our MCP server supplies tools (data) and widgets (screens); Claude supplies chat, memory and voice. The Step 0 mocks become the widget designs.
 - **Data: intervals.icu via OAuth.** Users connect their own account; scopes limited to reading activities and wellness. Covers Garmin, Coros, Suunto, Polar and Wahoo. Strava stays out because its API bans AI use.
 - **Data we keep.** intervals.icu stays the source of truth. We store one summary row per workout, computed results such as best efforts, and what the user tells us. GPS, splits and laps are fetched on demand and cached with a time limit. The copy is rebuildable and dropped on disconnect.
-- **Stack, all TypeScript.** Next.js on Vercel using Vercel's official MCP Apps starter (mcp-handler plus the MCP Apps SDK), Supabase Postgres with row-level security so every row is owned by a user, Supabase Auth as the OAuth 2.1 server Claude signs users in with, Resend for email, pg_cron for scheduled sync. One monorepo: `packages/domain` for the shared model and maths, `apps/server` for everything else.
+- **Stack, all TypeScript.** Next.js on Vercel using Vercel's official MCP Apps starter (mcp-handler plus the MCP Apps SDK), Supabase Postgres with row-level security so every row is owned by a user, Supabase Auth as the OAuth 2.1 server Claude signs users in with, Resend for email, pg_cron for scheduled sync. One Next.js package, with `src/domain` kept free of I/O as the seam for a shared package later (see DECISIONS.md, 16 Oct).
 - **One user first, multi-user data model from day one.** The spike and Phase 0 run on Marc's own key with no sign-in. But every table carries a user id with row-level security from the first migration, because that is cheap to do early and painful to retrofit. Accounts, per-user tokens encrypted at rest, rate limits, export and delete arrive in Phase 1.
 - **Maps.** Real tiles if Claude honours the widget's allowed domains, otherwise a monochrome vector map drawn from server-supplied data. The spike decides.
 - **Quality.** TDD in domain and server, with tools exercised in-process through an MCP client. Widgets tested as React components, plus manual passes in the MCP inspector and Claude. CI runs lint, typecheck, tests, audit, secret scan and SAST. OWASP ASVS for the server with a ZAP scan against previews.
@@ -16,8 +16,8 @@ A Claude connector that turns a runner's watch data into an interactive coach in
 Each ends with something installable in Claude.
 
 - **Step 0, mocks.** Done: https://claude.ai/artifact/JWjkuD3Wn4sMNKrRiAxK2Y
-- **Spike, one to two days.** Vercel starter, one tool, the activity widget with a map, fixture data, single user, and an email with an "open in Claude" link. Answers four questions: widget on iPhone, map tiles or vector fallback, full-screen mode, and what the link does on a phone.
-- **0. Foundations.** Public GitHub repo from the first commit, monorepo, CI, Vercel and Supabase projects, landing page skeleton. Done when the connector installs in Claude and a hello tool renders a widget.
+- **Spike, one to two days.** Mostly done, see "Where we are". Vercel starter, two tools (history and detail), the detail widget with a map, real anonymised fixtures, single user behind a shared bearer token. Still to do: the email with an "open in Claude" link. Answers four questions: widget on iPhone (yes), map tiles or vector fallback, full-screen mode, and what the link does on a phone (the last three waiting on a check in Claude).
+- **0. Foundations.** Public GitHub repo from the first commit, CI, Vercel and Supabase projects, landing page skeleton. Done when the connector installs in Claude and a hello tool renders a widget. Repo, CI, Vercel and the connector are done by the spike; Supabase, the first migration with row-level security, and the landing page remain.
 - **1. Accounts and connections.** Sign-in, OAuth for Claude with dynamic registration, intervals.icu connect, onboarding page with the "add to Claude" steps, per-user ingestion with resumable backfill. Done when a second person installs it and sees only their own activities.
 - **2. Core tools and widgets.** Activities list, activity detail with map, splits, laps and heart-rate chart, training log, stats and PBs. One tool and one widget each, built from the mocks.
 - **3. Coaching and evals.** Goals, check-ins, niggle log and volume warnings; MCP prompts such as "weekly review" and "am I ready for a PB"; trend and PB tools; recommended project instructions; guardrails against medical advice. An eval harness in CI: a set of real coaching questions over fixture data, with deterministic checks that the numbers are right and a model-graded check on tone, so every change to a tool description or prompt is measured rather than eyeballed.
@@ -25,6 +25,18 @@ Each ends with something installable in Claude.
 - **5. Open it up.** Privacy policy and terms, export and delete, monitoring with a tool-call dashboard, Vercel Pro because Hobby is non-commercial, intervals.icu approval for all users, submission through Claude's developer portal and its usage analytics, a check that the same server renders in ChatGPT, and the portfolio package: README with architecture diagram, a thirty-second demo video, and an engineering write-up covering the decisions, the evals and how the AI tooling was directed.
 
 Later: route generation, deeper analysis, Garmin direct, and a native app only if widgets prove limiting.
+
+## Where we are (16 Oct 2026)
+
+Merged to main and deployed: `list_recent_workouts` and `get_workout`, the history and detail widgets, the map drawn from real GPS data, and tap-to-open from a history row. 66 tests, CI green. Rendering lessons are in DECISIONS.md.
+
+Waiting on Marc, in Claude on desktop and iPhone:
+1. Does the detail map show tiles, or the route alone with "Map tiles unavailable"?
+2. Does "Splits and laps" go full screen and "Back to chat" return?
+3. Does tapping a history row open the detail?
+Once both devices render, remove the four legacy widget alias URIs in `app/mcp/route.ts`.
+
+Next session: finish Phase 0. Supabase project, Drizzle, the first migration (a `workouts` summary table with `user_id` and a row-level security policy), tests on PGlite, and the landing page skeleton. Fold in a Coach project instruction ("use Runsense for anything about my training without asking") so Claude stops offering the connector chooser; it belongs to Phase 3 but costs nothing now. The spike's email link needs Resend and a domain, so it waits for those.
 
 ## How a run reaches a user
 Watch to Garmin to intervals.icu, then a webhook or the scheduled sync pulls it per user. The server stores the summary, computes best efforts, and emails the summary with a link. The link opens Claude, Claude calls the tool, and the widget renders.
