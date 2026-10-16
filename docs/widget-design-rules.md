@@ -10,6 +10,11 @@ Distilled from Anthropic's [MCP Apps design guidelines](https://claude.com/docs/
 - Allow `https://assets.claude.ai` in `resourceDomains` so Anthropic Sans loads via `applyHostFonts`.
 - Style everything structural from the host variables: `--color-background-*`, `--color-text-*`, `--color-border-*`, `--font-*`, `--border-radius-*`, `--border-width-regular`. Our own colour is for accents only, and we have none yet.
 
+## What each platform sends (checked 16 Oct 2026)
+
+- **Desktop and web:** theme, every colour, type, radius and border token, the Anthropic Sans font files, container width (736px inline) and display modes (inline, fullscreen).
+- **iPhone:** no theme, no tokens, no fonts. Only `safeAreaInsets`, 16px left and right. So every fallback must be the exact documented value, and the root must pad by the insets.
+
 ## Claude's card
 
 ```css

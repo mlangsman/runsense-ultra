@@ -1,31 +1,33 @@
 @import "tailwindcss";
 
 /*
- * Tokens follow Anthropic's MCP Apps design guidelines: structural colours,
- * type and radii come from the host's variables, which Claude sets on <html>
- * at runtime. Fallbacks use light-dark() so the widget still reads correctly
- * outside a host. Three type sizes (heading, body, caption), two weights.
+ * Tokens follow Anthropic's MCP Apps design guidelines. Desktop Claude sets
+ * every --color-*, --font-* and --border-* variable on <html> at runtime, plus
+ * the Anthropic Sans font files. Claude for iOS sends none of them yet (checked
+ * 16 Oct 2026), so each fallback below is the exact documented value: the
+ * widget renders the same either way. Three type sizes, two weights.
  */
 :root {
   --rs-bg-secondary: var(
     --color-background-secondary,
-    light-dark(#f5f4ed, #262624)
+    light-dark(rgba(245, 244, 237, 1), rgba(38, 38, 36, 1))
   );
   --rs-bg-tertiary: var(
     --color-background-tertiary,
-    light-dark(#faf9f5, #141413)
+    light-dark(rgba(250, 249, 245, 1), rgba(20, 20, 19, 1))
   );
-  --rs-bg-inverse: var(
-    --color-background-inverse,
-    light-dark(#141413, #faf9f5)
+  --rs-text: var(
+    --color-text-primary,
+    light-dark(rgba(20, 20, 19, 1), rgba(250, 249, 245, 1))
   );
-  --rs-text: var(--color-text-primary, light-dark(#141413, #faf9f5));
   --rs-text-secondary: var(
     --color-text-secondary,
-    light-dark(#3d3d3a, #c2c0b6)
+    light-dark(rgba(61, 61, 58, 1), rgba(194, 192, 182, 1))
   );
-  --rs-text-tertiary: var(--color-text-tertiary, light-dark(#73726c, #9c9a92));
-  --rs-text-inverse: var(--color-text-inverse, light-dark(#ffffff, #141413));
+  --rs-text-tertiary: var(
+    --color-text-tertiary,
+    light-dark(rgba(115, 114, 108, 1), rgba(156, 154, 146, 1))
+  );
   --rs-border: var(
     --color-border-primary,
     light-dark(rgba(31, 30, 29, 0.4), rgba(222, 220, 209, 0.4))
@@ -36,8 +38,8 @@
   );
   --rs-border-width: var(--border-width-regular, 0.5px);
   --rs-radius: var(--border-radius-md, 8px);
-  --rs-radius-sm: var(--border-radius-sm, 6px);
-  --rs-font: var(--font-sans, "Anthropic Sans", system-ui, sans-serif);
+  --rs-radius-full: var(--border-radius-full, 9999px);
+  --rs-font: var(--font-sans, "anthropic-sans", system-ui, sans-serif);
   --rs-heading-size: var(--font-heading-md-size, 16px);
   --rs-heading-lh: var(--font-heading-md-line-height, 1.4);
   --rs-body-size: var(--font-text-sm-size, 14px);
@@ -45,7 +47,13 @@
   --rs-caption-size: var(--font-text-xs-size, 12px);
   --rs-caption-lh: var(--font-text-xs-line-height, 1.4);
   --rs-weight-normal: var(--font-weight-normal, 400);
+  --rs-weight-medium: var(--font-weight-medium, 500);
   --rs-weight-emphasis: var(--font-weight-semibold, 600);
+  /* Spacing on a 4px grid, matching Claude's own cards: 16 inside, 12 between. */
+  --rs-space-1: 4px;
+  --rs-space-2: 8px;
+  --rs-space-3: 12px;
+  --rs-space-4: 16px;
 }
 
 /* Leave the chat surface showing through: never paint html or body. */
@@ -59,6 +67,7 @@ body {
   line-height: var(--rs-body-lh);
   font-weight: var(--rs-weight-normal);
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 /* Claude's card recipe from the design guidelines. */
@@ -67,9 +76,8 @@ body {
   border: var(--rs-border-width) solid var(--rs-border);
   border-radius: var(--rs-radius);
 }
-.rs-hairline {
-  border-color: var(--rs-border-tertiary);
-  border-width: var(--rs-border-width);
+.rs-divider {
+  border-top: var(--rs-border-width) solid var(--rs-border-tertiary);
 }
 .rs-heading {
   font-size: var(--rs-heading-size);
@@ -77,7 +85,7 @@ body {
   font-weight: var(--rs-weight-emphasis);
 }
 .rs-emphasis {
-  font-weight: var(--rs-weight-emphasis);
+  font-weight: var(--rs-weight-medium);
 }
 .rs-secondary {
   color: var(--rs-text-secondary);
@@ -87,24 +95,28 @@ body {
   line-height: var(--rs-caption-lh);
   color: var(--rs-text-tertiary);
 }
-.rs-badge {
-  border-radius: var(--rs-radius-sm);
-  background: var(--rs-bg-inverse);
-  color: var(--rs-text-inverse);
-  font-size: var(--rs-caption-size);
-  font-weight: var(--rs-weight-emphasis);
-}
-.rs-badge-outline {
-  border-radius: var(--rs-radius-sm);
-  border: var(--rs-border-width) solid var(--rs-border);
-  color: var(--rs-text);
-  font-size: var(--rs-caption-size);
-  font-weight: var(--rs-weight-emphasis);
-}
-.rs-badge-soft {
-  border-radius: var(--rs-radius-sm);
+/* Claude's own tags are quiet pills: tertiary fill, secondary text. */
+.rs-pill {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 var(--rs-space-2);
+  border-radius: var(--rs-radius-full);
   background: var(--rs-bg-tertiary);
-  color: var(--rs-text);
+  border: var(--rs-border-width) solid var(--rs-border-tertiary);
+  color: var(--rs-text-secondary);
   font-size: var(--rs-caption-size);
-  font-weight: var(--rs-weight-emphasis);
+  font-weight: var(--rs-weight-medium);
+  line-height: 1;
+  white-space: nowrap;
+}
+.rs-skeleton {
+  background: var(--rs-bg-tertiary);
+  border-radius: var(--rs-radius);
+  animation: rs-pulse 1.4s ease-in-out infinite;
+}
+@keyframes rs-pulse {
+  50% {
+    opacity: 0.55;
+  }
 }

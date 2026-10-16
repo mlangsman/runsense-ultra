@@ -43,14 +43,23 @@ function write(key: string, value: unknown): void {
 let memConnected = read<boolean>(STORAGE.CONNECTED) ?? false;
 let memToolInput = read<Record<string, unknown>>(STORAGE.INPUT);
 let memToolResult = read<Record<string, unknown>>(STORAGE.RESULT);
-let memHost: HostInfo = { theme: null, hostStyles: false, debug: "" };
+const NO_INSETS = { top: 0, right: 0, bottom: 0, left: 0 };
+let memHost: HostInfo = {
+  theme: null,
+  hostStyles: false,
+  platform: null,
+  displayMode: null,
+  safeArea: NO_INSETS,
+};
 
 export interface HostInfo {
   theme: "light" | "dark" | null;
   /** True when the host supplied its own CSS variables for theming. */
   hostStyles: boolean;
-  /** Temporary: what the host sent, so we can match its look by evidence. */
-  debug: string;
+  platform: string | null;
+  displayMode: string | null;
+  /** Pixels the host asks us to keep clear on each edge. */
+  safeArea: { top: number; right: number; bottom: number; left: number };
 }
 
 const listeners = new Set<() => void>();
@@ -78,21 +87,18 @@ async function applyHostContext(ctx: McpUiHostContext | undefined) {
   }
   const fonts = ctx.styles?.css?.fonts;
   if (fonts) applyHostFonts(fonts);
-  const rest = Object.fromEntries(
-    Object.entries(ctx).filter(([k]) => k !== "styles"),
-  );
+  const insets = ctx.safeAreaInsets as Partial<typeof NO_INSETS> | undefined;
   memHost = {
-    theme: ctx.theme ?? null,
-    hostStyles: !!variables && Object.keys(variables).length > 0,
-    debug: JSON.stringify(
-      {
-        context: rest,
-        fontsCss: fonts ? `${fonts.length} chars` : null,
-        variables: variables ?? null,
-      },
-      null,
-      1,
-    ),
+    theme: ctx.theme ?? memHost.theme,
+    hostStyles:
+      memHost.hostStyles || (!!variables && Object.keys(variables).length > 0),
+    platform:
+      typeof ctx.platform === "string" ? ctx.platform : memHost.platform,
+    displayMode:
+      typeof ctx.displayMode === "string"
+        ? ctx.displayMode
+        : memHost.displayMode,
+    safeArea: insets ? { ...NO_INSETS, ...insets } : memHost.safeArea,
   };
   notify();
 }
