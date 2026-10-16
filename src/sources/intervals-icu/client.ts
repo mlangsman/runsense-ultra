@@ -1,4 +1,8 @@
-import type { IntervalsActivity } from "./mapper";
+import type {
+  IntervalsActivity,
+  IntervalsIntervalsResponse,
+  IntervalsStream,
+} from "./mapper";
 
 const BASE_URL = "https://intervals.icu/api/v1";
 
@@ -25,6 +29,16 @@ export interface DateRange {
   newest: string;
 }
 
+/** The stream names intervals.icu serves that we know how to read. */
+export type StreamType =
+  | "time"
+  | "distance"
+  | "latlng"
+  | "heartrate"
+  | "altitude"
+  | "cadence"
+  | "velocity_smooth";
+
 export function createIntervalsIcuClient(options: IntervalsIcuClientOptions) {
   const doFetch = options.fetch ?? fetch;
   const authorization = `Basic ${Buffer.from(`API_KEY:${options.apiKey}`).toString("base64")}`;
@@ -49,6 +63,16 @@ export function createIntervalsIcuClient(options: IntervalsIcuClientOptions) {
         newest: range.newest,
       });
       return get(`/athlete/${options.athleteId}/activities?${params}`);
+    },
+    getActivity(id: string): Promise<IntervalsActivity> {
+      return get(`/activity/${encodeURIComponent(id)}`);
+    },
+    getStreams(id: string, types: StreamType[]): Promise<IntervalsStream[]> {
+      const params = new URLSearchParams({ types: types.join(",") });
+      return get(`/activity/${encodeURIComponent(id)}/streams?${params}`);
+    },
+    getIntervals(id: string): Promise<IntervalsIntervalsResponse> {
+      return get(`/activity/${encodeURIComponent(id)}/intervals`);
     },
   };
 }

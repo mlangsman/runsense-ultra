@@ -63,9 +63,17 @@ sequenceDiagram
 
 ## Code layout
 
+One Next.js app. Dependencies point one way, down this list; nothing imports from `app/`.
+
 ```
-packages/domain   model, maths, formatting; pure TypeScript, no I/O
-apps/server       Next.js on Vercel: MCP endpoint and widgets, ingestion, email, onboarding pages, auth glue
+src/domain      model, maths and formatting: workouts, splits, route simplification, static-map geometry, the text Claude reads. Pure TypeScript, no I/O
+src/sources     intervals.icu client and mappers from its shapes to ours, with anonymised fixtures
+src/services    use cases: recent workouts, one workout in detail
+app/mcp         the MCP endpoint: tools and widget resources, kept thin
+app/            the widgets (one page each) and the host bridge hook
+scripts/        developer tools, e.g. capturing a fixture from a real account
 ```
 
-Dependencies point one way: `apps/server` depends on `packages/domain`; nothing depends on `apps/server`. Routes and MCP tools stay thin; services and domain functions hold the logic.
+## Widgets
+
+Each widget is a Next.js page served at one stable `ui://` address and rendered by Claude in a sandboxed iframe. The tool result carries everything the widget needs, including the GPS route as a simplified encoded polyline, so the widget makes no calls of its own. The map is a static grid of tile images placed by our own geometry, with the route drawn over them in SVG; if a tile fails to load the route stays on a plain card.

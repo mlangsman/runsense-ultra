@@ -6,8 +6,15 @@
  * the Anthropic Sans font files. Claude for iOS sends none of them yet (checked
  * 16 Oct 2026), so each fallback below is the exact documented value: the
  * widget renders the same either way. Three type sizes, two weights.
+ *
+ * `color-scheme` must be declared here as a CSS property, not only as the meta
+ * tag in the head: the CSS compiler (Lightning CSS, via Tailwind) rewrites
+ * `light-dark()` into helper variables that it only switches on where it sees
+ * this declaration. Without it every fallback below is an invalid colour and
+ * cards, pills and bars silently vanish on hosts that send no tokens.
  */
 :root {
+  color-scheme: light dark;
   --rs-bg-secondary: var(
     --color-background-secondary,
     light-dark(rgba(245, 244, 237, 1), rgba(38, 38, 36, 1))
@@ -54,6 +61,14 @@
   --rs-space-2: 8px;
   --rs-space-3: 12px;
   --rs-space-4: 16px;
+}
+
+/* The host may pin a theme on <html>; follow it rather than the OS setting. */
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
 }
 
 /* Leave the chat surface showing through: never paint html or body. */
@@ -119,4 +134,100 @@ body {
   50% {
     opacity: 0.55;
   }
+}
+
+/* A quiet secondary button: Claude's card recipe with a pill shape. Tap targets grow on touch screens. */
+.rs-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  padding: 0 var(--rs-space-4);
+  border-radius: var(--rs-radius-full);
+  background: var(--rs-bg-secondary);
+  border: var(--rs-border-width) solid var(--rs-border);
+  color: var(--rs-text);
+  font: inherit;
+  font-weight: var(--rs-weight-medium);
+  cursor: pointer;
+}
+.rs-button:hover {
+  background: var(--rs-bg-tertiary);
+}
+@media (pointer: coarse) {
+  .rs-button {
+    min-height: 44px;
+  }
+}
+
+/* The map frame: tiles sit behind an SVG route, clipped to the card. */
+.rs-map {
+  position: relative;
+  overflow: hidden;
+  background: var(--rs-bg-tertiary);
+}
+.rs-map img {
+  position: absolute;
+  width: 256px;
+  height: 256px;
+  max-width: none;
+  pointer-events: none;
+  user-select: none;
+}
+.rs-map svg {
+  position: absolute;
+  inset: 0;
+}
+.rs-map-attribution {
+  position: absolute;
+  right: var(--rs-space-2);
+  bottom: var(--rs-space-1);
+  padding: 0 var(--rs-space-1);
+  border-radius: var(--rs-radius);
+  background: var(--rs-bg-secondary);
+  font-size: 10px;
+  line-height: 1.6;
+  color: var(--rs-text-tertiary);
+}
+
+/* Splits as thin columns, one hue, rounded at the data end, square at the baseline. */
+.rs-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 64px;
+}
+.rs-bar {
+  flex: 1 1 0;
+  max-width: 24px;
+  min-height: 3px;
+  border-radius: 4px 4px 0 0;
+  background: var(--rs-text-tertiary);
+}
+.rs-bar[data-fastest="true"] {
+  background: var(--rs-text);
+}
+
+/* Plain tables for full screen: dividers only, numbers right-aligned. */
+.rs-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.rs-table th,
+.rs-table td {
+  padding: var(--rs-space-2) var(--rs-space-1);
+  text-align: right;
+  white-space: nowrap;
+}
+.rs-table th:first-child,
+.rs-table td:first-child {
+  text-align: left;
+}
+.rs-table th {
+  font-size: var(--rs-caption-size);
+  font-weight: var(--rs-weight-medium);
+  color: var(--rs-text-tertiary);
+}
+.rs-table tbody tr {
+  border-top: var(--rs-border-width) solid var(--rs-border-tertiary);
 }

@@ -49,6 +49,7 @@ let memHost: HostInfo = {
   hostStyles: false,
   platform: null,
   displayMode: null,
+  availableDisplayModes: null,
   safeArea: NO_INSETS,
 };
 
@@ -58,6 +59,8 @@ export interface HostInfo {
   hostStyles: boolean;
   platform: string | null;
   displayMode: string | null;
+  /** What the host can switch to; null when it did not say. */
+  availableDisplayModes: string[] | null;
   /** Pixels the host asks us to keep clear on each edge. */
   safeArea: { top: number; right: number; bottom: number; left: number };
 }
@@ -98,6 +101,9 @@ async function applyHostContext(ctx: McpUiHostContext | undefined) {
       typeof ctx.displayMode === "string"
         ? ctx.displayMode
         : memHost.displayMode,
+    availableDisplayModes: Array.isArray(ctx.availableDisplayModes)
+      ? (ctx.availableDisplayModes as string[])
+      : memHost.availableDisplayModes,
     safeArea: insets ? { ...NO_INSETS, ...insets } : memHost.safeArea,
   };
   notify();

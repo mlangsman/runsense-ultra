@@ -1,0 +1,23 @@
+{
+  "id": "i1001",
+  "type": "Run",
+  "name": "Morning run",
+  "start_date_local": "2026-10-11T08:15:16",
+  "start_date": "2026-10-11T07:15:16Z",
+  "timezone": null,
+  "distance": 12577.6,
+  "moving_time": 4096,
+  "elapsed_time": 4194,
+  "total_elevation_gain": 68.07204,
+  "average_heartrate": 156,
+  "max_heartrate": 180,
+  "icu_training_load": 104,
+  "average_speed": 3.07,
+  "average_cadence": 78.36829,
+  "pace": 3.070703,
+  "trainer": null,
+  "source": "GARMIN_CONNECT",
+  "device_name": "Forerunner",
+  "icu_rpe": null,
+  "feel": null
+}

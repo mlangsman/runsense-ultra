@@ -25,6 +25,21 @@ export interface Workout {
   cadenceSpm: number | null;
 }
 
+/** A segment the watch marked: an auto-lap each kilometre, or a pressed button. */
+export interface Lap {
+  /** 1-based. */
+  index: number;
+  kind: "work" | "recovery";
+  name: string | null;
+  distanceM: number | null;
+  movingSec: number;
+  elapsedSec: number;
+  avgHr: number | null;
+  maxHr: number | null;
+  elevationGainM: number | null;
+  cadenceSpm: number | null;
+}
+
 const MISSING = "–";
 
 export function paceSecPerKm(
