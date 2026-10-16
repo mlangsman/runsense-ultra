@@ -12,7 +12,7 @@ A running coach inside Claude: an MCP server with interactive widgets, fed by th
 
 ## Decision log, kept as you go
 
-Whenever a choice is made that someone could reasonably have made differently, add one row to [DECISIONS.md](DECISIONS.md) in the same commit: date, decision, why, instead of. That includes libraries, data model shapes, trade-offs accepted, and anything that reverses an earlier row (mark the old row "superseded on <date>"). Open questions go in its "Still open" list and are ticked and turned into rows when settled. Do this without being asked; the pull request template has a checkbox for it. Keep [ARCHITECTURE.md](ARCHITECTURE.md) current when a component or data flow changes.
+Whenever a choice is made that someone could reasonably have made differently, add one row to [DECISIONS.md](DECISIONS.md) in the same commit: date, decision, why, instead of. That includes libraries, data model shapes, trade-offs accepted, and anything that reverses an earlier row (mark the old row "superseded on <date>"). Open questions go in its "Still open" list and are ticked and turned into rows when settled. Do this without being asked; the pull request template has a checkbox for it. Keep [ARCHITECTURE.md](ARCHITECTURE.md) current when a component or data flow changes. Widgets follow [docs/widget-design-rules.md](docs/widget-design-rules.md), distilled from Anthropic's MCP Apps design guidelines.
 
 ## Stack
 

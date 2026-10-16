@@ -15,6 +15,8 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        {/* Opts into the host's light or dark scheme so the browser drops the opaque iframe backdrop. */}
+        <meta name="color-scheme" content="light dark" />
         <IframeBootstrap baseUrl={baseURL} />
       </head>
       <body className="antialiased">{children}</body>

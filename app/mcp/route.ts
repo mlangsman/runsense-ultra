@@ -11,7 +11,7 @@ import { summarise, toWorkoutRow } from "@/src/domain/summary";
 import { getRecentWorkouts } from "@/src/services/recentWorkouts";
 import { intervalsIcuClientFromEnv } from "@/src/sources/intervals-icu/client";
 
-const UI_VERSION = "2026-10-16-3";
+const UI_VERSION = "2026-10-16-4";
 const RESOURCE_URI = `ui://runsense/workouts.html?v=${UI_VERSION}`;
 
 async function fetchPageHtml(path: string): Promise<string> {
@@ -33,9 +33,12 @@ const handler = createMcpHandler(async (server) => {
           text: await fetchPageHtml("/"),
           _meta: {
             ui: {
+              // Claude web is borderless by default; be explicit for other hosts.
+              prefersBorder: false,
               csp: {
                 connectDomains: [baseURL],
-                resourceDomains: [baseURL],
+                // assets.claude.ai serves Anthropic Sans for applyHostFonts.
+                resourceDomains: [baseURL, "https://assets.claude.ai"],
               },
             },
           },

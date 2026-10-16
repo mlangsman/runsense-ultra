@@ -78,7 +78,9 @@ async function applyHostContext(ctx: McpUiHostContext | undefined) {
   }
   const fonts = ctx.styles?.css?.fonts;
   if (fonts) applyHostFonts(fonts);
-  const { styles: _styles, ...rest } = ctx;
+  const rest = Object.fromEntries(
+    Object.entries(ctx).filter(([k]) => k !== "styles"),
+  );
   memHost = {
     theme: ctx.theme ?? null,
     hostStyles: !!variables && Object.keys(variables).length > 0,
