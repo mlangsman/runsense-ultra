@@ -37,3 +37,31 @@ One line per decision, oldest first. Kept concise for the engineering write-up. 
 - [ ] Coach concept: leaning towards rich answers (concept 3) with the coach thread's proactive comments (concept 1). Waiting on Marc's review of the mocks.
 - [ ] intervals.icu webhooks for OAuth apps: unverified. Fallback is the 15-minute scheduled sync.
 - [ ] Which training-load model drives volume warnings.
+
+## Rendering notes: getting a widget to look like Claude (16 Oct 2026)
+
+What went wrong in the first day of widget work, what Anthropic's [design guidelines](https://claude.com/docs/connectors/building/mcp-apps/design-guidelines), [theme-blending guide](https://claude.com/docs/connectors/building/mcp-apps/transparent-theming) and [troubleshooting page](https://claude.com/docs/connectors/building/mcp-apps/troubleshooting) said about it, and what we changed. Kept for the write-up; the rules themselves live in [docs/widget-design-rules.md](docs/widget-design-rules.md).
+
+| What we saw | Cause | Guidance and fix |
+| --- | --- | --- |
+| First render looked like a static image: own dark panel, nested cards, no affordances | We painted our own background and drew cards inside Claude's card; nothing was tappable | Treat the widget as part of the conversation. Use Claude's card recipe once, add real affordances later (row tap, range switcher) |
+| Desktop: white frame around a dark widget | The iframe's colour scheme differed from the page, so the browser painted its opaque backdrop | `<meta name="color-scheme" content="light dark">` plus a genuinely unpainted `html`/`body`, and `prefersBorder: false` so Claude adds no frame of its own |
+| Mobile: double borders and padding | Mobile wraps widgets in a bordered card by default and we drew more cards inside it | Borderless frame; a single card drawn to Claude's recipe; honour `safeAreaInsets` (16px each side on iPhone) |
+| Typography didn't match | We never allowed the font origin, and the starter's iframe guard stripped the `style` attribute Claude writes its variables into | Allow `https://assets.claude.ai` in `resourceDomains`; stop stripping `style` and `data-theme` on `<html>`; use the host's `--font-*` tokens |
+| Mobile: "failed to load connector"; desktop showed an old design | Claude snapshots the tool list and widget HTML when a connector is added. We versioned the widget address per deploy, so cached clients pointed at an address the server no longer served | One stable address, old addresses kept as aliases, HTML fetched fresh on every read. Reconnect the connector once to clear the snapshot |
+| Mobile shows no theme or tokens | Claude for iOS sends only `safeAreaInsets` today; desktop sends theme, all tokens and the font files | Fallbacks are the exact documented token values, so both platforms render the same |
+| Claude kept offering Strava alongside Runsense | Two connectors answer the same question; a disabled connector still appears in the chooser | Remove Strava while testing; a Coach project instruction settles it later; keep our tool descriptions specific |
+
+![First render: own panel and nested cards](docs/images/rendering/01-first-render-nested-cards.png)
+
+![Desktop: opaque white backdrop behind the frame](docs/images/rendering/02-desktop-white-backdrop.png)
+
+![Mobile: Claude's bordered card plus our cards inside it](docs/images/rendering/03-mobile-double-borders.png)
+
+![Desktop showing a stale cached version two deploys old](docs/images/rendering/04-desktop-stale-cache.png)
+
+![Desktop after adopting the guidelines, with host tokens and font](docs/images/rendering/05-desktop-host-tokens.png)
+
+![Mobile debug panel: safe-area insets only, no tokens or fonts](docs/images/rendering/06-mobile-no-tokens-debug.png)
+
+![Claude's connector chooser when two connectors overlap](docs/images/rendering/07-connector-chooser.webp)
