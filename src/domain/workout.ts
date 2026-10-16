@@ -21,6 +21,8 @@ export interface Workout {
   maxHr: number | null;
   /** The source's training load figure, when it has one. */
   trainingLoad: number | null;
+  /** Steps per minute for runs; revolutions per minute for rides. */
+  cadenceSpm: number | null;
 }
 
 const MISSING = "–";
