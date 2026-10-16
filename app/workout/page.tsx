@@ -314,7 +314,10 @@ function SplitsChart({ splits }: { splits: Split[] }) {
             style={
               {
                 height: `${30 + 70 * (1 - (s.paceSecPerKm - fastest) / spread)}%`,
-                "--rs-bar-strength": `${Math.round(35 + 65 * (1 - (s.paceSecPerKm - fastest) / spread))}%`,
+                "--rs-bar-alpha": (
+                  0.35 +
+                  0.65 * (1 - (s.paceSecPerKm - fastest) / spread)
+                ).toFixed(2),
               } as React.CSSProperties
             }
             title={`${s.index} km · ${formatPace(s.paceSecPerKm)} /km${s.avgHr != null ? ` · HR ${s.avgHr}` : ""}`}

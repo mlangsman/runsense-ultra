@@ -71,7 +71,8 @@
    * semantic info and success tokens cover the ride pill and the start marker.
    * Text in an accent uses a darker or lighter step so it reads at 12px.
    */
-  --rs-accent: #d97757;
+  --rs-accent-rgb: 217 119 87;
+  --rs-accent: rgb(var(--rs-accent-rgb));
   --rs-accent-text: light-dark(#9a4826, #ec9f84);
   --rs-accent-tint: light-dark(
     rgba(217, 119, 87, 0.16),
@@ -283,11 +284,8 @@ li:last-child > button.rs-row {
   max-width: 24px;
   min-height: 3px;
   border-radius: 4px 4px 0 0;
-  background: color-mix(
-    in oklab,
-    var(--rs-accent) var(--rs-bar-strength, 100%),
-    var(--rs-bg-secondary)
-  );
+  /* An alpha channel rather than color-mix(): the CSS compiler cannot lower color-mix() with variable arguments for older engines, and Claude desktop's embedded browser can lag the web. */
+  background: rgb(var(--rs-accent-rgb) / var(--rs-bar-alpha, 1));
 }
 
 /* Plain tables for full screen: dividers only, numbers right-aligned. */
