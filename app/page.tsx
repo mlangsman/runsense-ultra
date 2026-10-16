@@ -45,10 +45,18 @@ export default function WorkoutsWidget() {
         role: "user",
         content: [{ type: "text", text: openWorkoutMessage(row) }],
       });
-      // The host can advertise the capability and still refuse the message; say so rather than fail silently.
-      if (result?.isError) console.warn("[mcp-app] host declined the message");
+      // The host can advertise the capability and still refuse the message; tell the host's log rather than fail silently.
+      if (result?.isError) {
+        void app?.sendLog({
+          level: "warning",
+          data: "host declined ui/message",
+        });
+      }
     } catch (err) {
-      console.warn("[mcp-app] message failed:", err);
+      void app?.sendLog({
+        level: "error",
+        data: `ui/message failed: ${String(err)}`,
+      });
     }
   };
 

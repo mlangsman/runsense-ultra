@@ -61,7 +61,10 @@ export default function WorkoutWidget() {
     try {
       await app?.requestDisplayMode({ mode });
     } catch (err) {
-      console.warn("[mcp-app] display mode request failed:", err);
+      void app?.sendLog({
+        level: "warning",
+        data: `display mode request failed: ${String(err)}`,
+      });
     }
   };
 

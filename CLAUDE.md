@@ -14,6 +14,10 @@ A running coach inside Claude: an MCP server with interactive widgets, fed by th
 
 Whenever a choice is made that someone could reasonably have made differently, add one row to [DECISIONS.md](DECISIONS.md) in the same commit: date, decision, why, instead of. That includes libraries, data model shapes, trade-offs accepted, and anything that reverses an earlier row (mark the old row "superseded on <date>"). Open questions go in its "Still open" list and are ticked and turned into rows when settled. Do this without being asked; the pull request template has a checkbox for it. Keep [ARCHITECTURE.md](ARCHITECTURE.md) current when a component or data flow changes. Widgets follow [docs/widget-design-rules.md](docs/widget-design-rules.md), distilled from Anthropic's MCP Apps design guidelines.
 
+## MCP Apps plugin
+
+The [MCP Apps plugin](https://github.com/modelcontextprotocol/ext-apps/tree/main/plugins/mcp-apps) is enabled for this repo in `.claude/settings.json`, so its skills (`create-mcp-app`, `add-app-to-server`, `convert-web-app`) load in every session. Follow them for anything touching `app/mcp` or the widgets: text fallback in every tool result, CSP on the resource contents, handlers registered before connect, the SDK's React hooks (`useApp`, `useHostStyleVariables`, `useHostFonts`) rather than a hand-rolled bridge, host variables for every style, `sendLog` for anything the host should see.
+
 ## Stack
 
 TypeScript everywhere, npm, one Next.js app on Vercel. `src/domain` holds the model, maths and formatting with no I/O; `src/sources` the data-source clients and mappers; `src/services` the use cases; `app/mcp` the MCP endpoint via mcp-handler and the MCP Apps SDK; `app/` the widgets and pages. Supabase Postgres with Drizzle, row-level security on every table, tests on PGlite. Supabase Auth as the OAuth 2.1 server for Claude. intervals.icu via OAuth. Resend for email. Target the MCP 2026-07-28 spec.

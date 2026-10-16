@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "extraKnownMarketplaces": {
+    "mcp-apps": {
+      "source": {
+        "source": "github",
+        "repo": "modelcontextprotocol/ext-apps",
+        "sparsePaths": [".claude-plugin", "plugins"]
+      },
+      "autoUpdate": true
+    }
+  },
+  "enabledPlugins": {
+    "mcp-apps@mcp-apps": true
+  }
+}
