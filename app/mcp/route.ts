@@ -11,41 +11,57 @@ import { summarise, toWorkoutRow } from "@/src/domain/summary";
 import { getRecentWorkouts } from "@/src/services/recentWorkouts";
 import { intervalsIcuClientFromEnv } from "@/src/sources/intervals-icu/client";
 
-const UI_VERSION = "2026-10-16-4";
-const RESOURCE_URI = `ui://runsense/workouts.html?v=${UI_VERSION}`;
+/**
+ * The widget lives at ONE stable address. Claude caches a connector's tool
+ * list and widget HTML when the connector is added, so a URI that changes per
+ * deploy leaves cached clients pointing at an address the server no longer
+ * serves (seen as "failed to load connector" on mobile). Earlier versioned
+ * addresses are kept as aliases for clients that cached them.
+ */
+const RESOURCE_URI = "ui://runsense/workouts.html";
+const LEGACY_RESOURCE_URIS = [1, 2, 3, 4].map(
+  (n) => `ui://runsense/workouts.html?v=2026-10-16-${n}`,
+);
 
 async function fetchPageHtml(path: string): Promise<string> {
-  const res = await fetch(`${baseURL}${path}`);
+  const res = await fetch(`${baseURL}${path}`, { cache: "no-store" });
   return res.text();
 }
 
+const widgetMeta = {
+  ui: {
+    // Claude web is borderless by default; be explicit for other hosts.
+    prefersBorder: false,
+    csp: {
+      connectDomains: [baseURL],
+      // assets.claude.ai serves Anthropic Sans for applyHostFonts.
+      resourceDomains: [baseURL, "https://assets.claude.ai"],
+    },
+  },
+};
+
 const handler = createMcpHandler(async (server) => {
-  registerAppResource(
-    server,
-    "workouts-widget",
+  for (const [index, uri] of [
     RESOURCE_URI,
-    { mimeType: RESOURCE_MIME_TYPE },
-    async () => ({
-      contents: [
-        {
-          uri: RESOURCE_URI,
-          mimeType: RESOURCE_MIME_TYPE,
-          text: await fetchPageHtml("/"),
-          _meta: {
-            ui: {
-              // Claude web is borderless by default; be explicit for other hosts.
-              prefersBorder: false,
-              csp: {
-                connectDomains: [baseURL],
-                // assets.claude.ai serves Anthropic Sans for applyHostFonts.
-                resourceDomains: [baseURL, "https://assets.claude.ai"],
-              },
-            },
+    ...LEGACY_RESOURCE_URIS,
+  ].entries()) {
+    registerAppResource(
+      server,
+      index === 0 ? "workouts-widget" : `workouts-widget-legacy-${index}`,
+      uri,
+      { mimeType: RESOURCE_MIME_TYPE },
+      async () => ({
+        contents: [
+          {
+            uri,
+            mimeType: RESOURCE_MIME_TYPE,
+            text: await fetchPageHtml("/"),
+            _meta: widgetMeta,
           },
-        },
-      ],
-    }),
-  );
+        ],
+      }),
+    );
+  }
 
   registerAppTool(
     server,
