@@ -5,7 +5,7 @@ A running coach inside Claude: an MCP server with interactive widgets, fed by th
 ## How we work
 
 - Small, incremental, testable slices. One phase per session, one pull request per phase, with the phase's done criteria from PLAN.md as the acceptance test.
-- Test-first in `packages/domain` and in the server's services, mappers, ingestion and tools. Screens and widgets get tests after. Test pyramid: many unit, few integration, very few end-to-end.
+- Test-first in `src/domain`, `src/sources` and `src/services`, and in the tools. Screens and widgets get tests after. Test pyramid: many unit, few integration, very few end-to-end.
 - DRY, KISS, YAGNI, SOLID, separation of concerns. Thin route handlers and thin MCP tools; logic lives in services and domain functions. Don't build ahead of the phase.
 - Mainstream tools over clever ones. If you're reaching for something unusual, note why in DECISIONS.md.
 - Plain language in docs and commit messages. Keep documents short.
@@ -16,7 +16,7 @@ Whenever a choice is made that someone could reasonably have made differently, a
 
 ## Stack
 
-TypeScript everywhere. pnpm monorepo: `packages/domain` (model, maths, formatting; no I/O), `apps/server` (Next.js on Vercel: MCP endpoint via mcp-handler and the MCP Apps SDK, widgets, webhooks, email, onboarding pages). Supabase Postgres with Drizzle, row-level security on every table, tests on PGlite. Supabase Auth as the OAuth 2.1 server for Claude. intervals.icu via OAuth. Resend for email. Target the MCP 2026-07-28 spec.
+TypeScript everywhere, npm, one Next.js app on Vercel. `src/domain` holds the model, maths and formatting with no I/O; `src/sources` the data-source clients and mappers; `src/services` the use cases; `app/mcp` the MCP endpoint via mcp-handler and the MCP Apps SDK; `app/` the widgets and pages. Supabase Postgres with Drizzle, row-level security on every table, tests on PGlite. Supabase Auth as the OAuth 2.1 server for Claude. intervals.icu via OAuth. Resend for email. Target the MCP 2026-07-28 spec.
 
 ## Security
 
