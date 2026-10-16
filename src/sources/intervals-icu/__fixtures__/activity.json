@@ -1,7 +1,7 @@
 {
   "id": "i1001",
-  "type": "Run",
   "name": "Morning run",
+  "type": "Run",
   "start_date_local": "2026-10-11T08:15:16",
   "start_date": "2026-10-11T07:15:16Z",
   "timezone": null,
@@ -17,7 +17,5 @@
   "pace": 3.070703,
   "trainer": null,
   "source": "GARMIN_CONNECT",
-  "device_name": "Forerunner",
-  "icu_rpe": null,
-  "feel": null
+  "device_name": "Forerunner"
 }

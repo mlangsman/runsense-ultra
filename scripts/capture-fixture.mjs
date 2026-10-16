@@ -2,8 +2,9 @@
 /**
  * Capture one workout's detail from intervals.icu as anonymised test fixtures.
  *
- * Run locally, where the key lives:
+ * Run locally with the key, or in a cloud session whose proxy adds the auth:
  *   INTERVALS_ICU_API_KEY=... node scripts/capture-fixture.mjs i12345678
+ *   NODE_USE_ENV_PROXY=1 node scripts/capture-fixture.mjs i12345678
  *
  * Writes activity.json, streams.json and intervals.json into the fixtures
  * folder with the id, name and device wiped and the GPS track shifted by a
@@ -15,19 +16,19 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const [id] = process.argv.slice(2);
-const apiKey = process.env.INTERVALS_ICU_API_KEY;
-if (!id || !apiKey) {
+if (!id) {
   console.error(
-    "Usage: INTERVALS_ICU_API_KEY=... node scripts/capture-fixture.mjs <activity id>",
+    "Usage: [INTERVALS_ICU_API_KEY=...] node scripts/capture-fixture.mjs <activity id>",
   );
   process.exit(1);
 }
 
 const base = "https://intervals.icu/api/v1";
-const headers = {
-  authorization: `Basic ${Buffer.from(`API_KEY:${apiKey}`).toString("base64")}`,
-  accept: "application/json",
-};
+const apiKey = process.env.INTERVALS_ICU_API_KEY;
+const headers = { accept: "application/json" };
+if (apiKey) {
+  headers.authorization = `Basic ${Buffer.from(`API_KEY:${apiKey}`).toString("base64")}`;
+}
 const get = async (path) => {
   const res = await fetch(`${base}${path}`, { headers });
   if (!res.ok) throw new Error(`${res.status} for ${path}`);
@@ -67,17 +68,18 @@ const slimActivity = { id: FAKE_ID, name: "Morning run" };
 for (const k of keep) slimActivity[k] = activity[k] ?? null;
 slimActivity.device_name = activity.device_name ? "Forerunner" : null;
 
-const slimStreams = (Array.isArray(streams) ? streams : []).map((s) => ({
-  type: s.type,
-  data:
-    s.type === "latlng"
-      ? s.data.map((p) =>
-          Array.isArray(p)
-            ? [round(p[0] + shift[0], 6), round(p[1] + shift[1], 6)]
-            : p,
-        )
-      : s.data,
-}));
+// The latlng stream is two series: data is latitude, data2 longitude.
+const shifted = (series, by) =>
+  series.map((v) => (typeof v === "number" ? round(v + by, 6) : v));
+const slimStreams = (Array.isArray(streams) ? streams : []).map((s) =>
+  s.type === "latlng"
+    ? {
+        type: s.type,
+        data: shifted(s.data, shift[0]),
+        data2: shifted(s.data2 ?? [], shift[1]),
+      }
+    : { type: s.type, data: s.data },
+);
 
 const slimIntervals = {
   id: FAKE_ID,

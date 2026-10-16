@@ -33,13 +33,15 @@ describe("getWorkoutDetail", () => {
     expect(detail.workout.sport).toBe("run");
     expect(detail.splits).toHaveLength(13);
     expect(detail.splits[0].distanceM).toBe(1000);
-    expect(detail.laps).toHaveLength(13);
+    // One watch lap for the whole run, plus the short trailing block the source adds.
+    expect(detail.laps).toHaveLength(2);
     expect(detail.laps[0].index).toBe(1);
 
     const track = decodePolyline(detail.polyline!);
     expect(track.length).toBeGreaterThan(20);
     expect(track.length).toBeLessThanOrEqual(200);
-    expect(track[0][0]).toBeCloseTo(51.4525, 4);
+    expect(track[0][0]).toBeCloseTo(52.1543, 4);
+    expect(track[0][1]).toBeCloseTo(-0.4977, 4);
   });
 
   it("copes with a workout that has no streams or intervals", async () => {

@@ -65,11 +65,13 @@ describe("toWorkout", () => {
 describe("toStreams", () => {
   it("picks the streams we use by name", () => {
     const s = toStreams(streamsFixture as IntervalsStream[]);
-    expect(s.time?.length).toBe(420);
-    expect(s.distance?.[419]).toBe(12577.6);
-    expect(s.latlng?.[0]).toEqual([51.4525, -0.2715]);
-    expect(s.heartrate?.length).toBe(420);
-    expect(s.altitude?.length).toBe(420);
+    expect(s.time?.length).toBe(4108);
+    expect(s.distance?.[4107]).toBe(12577.6);
+    expect(s.heartrate?.length).toBe(4108);
+    expect(s.altitude?.length).toBe(4108);
+    // 22 samples before the GPS fix and 3 dropouts are skipped.
+    expect(s.latlng?.length).toBe(4083);
+    expect(s.latlng?.[0]).toEqual([52.154262, -0.497702]);
   });
 
   it("leaves missing streams undefined", () => {
@@ -77,6 +79,25 @@ describe("toStreams", () => {
     expect(s.time).toEqual([0, 1]);
     expect(s.latlng).toBeUndefined();
     expect(s.distance).toBeUndefined();
+  });
+
+  it("pairs latitude from data with longitude from data2, dropping samples before GPS lock", () => {
+    const s = toStreams([
+      {
+        type: "latlng",
+        data: [null, 51.8365, 51.8366],
+        data2: [null, -0.3571, -0.3572],
+      },
+    ]);
+    expect(s.latlng).toEqual([
+      [51.8365, -0.3571],
+      [51.8366, -0.3572],
+    ]);
+  });
+
+  it("leaves the track undefined when the latlng stream has no longitude array", () => {
+    const s = toStreams([{ type: "latlng", data: [51.8365, 51.8366] }]);
+    expect(s.latlng).toBeUndefined();
   });
 
   it("ignores a stream whose data is not an array", () => {
@@ -93,15 +114,15 @@ describe("toLap", () => {
     expect(lap).toMatchObject({
       index: 1,
       kind: "work",
-      distanceM: 1013.8,
-      movingSec: 320,
-      elapsedSec: 320,
-      avgHr: 153,
-      maxHr: 158,
+      distanceM: 12574.9,
+      movingSec: 4100,
+      elapsedSec: 4193,
+      avgHr: 156,
+      maxHr: 180,
     });
     expect(lap.name).toBeNull();
     expect(lap.cadenceSpm).toBe(156);
-    expect(lap.elevationGainM).toBeCloseTo(10.4, 1);
+    expect(lap.elevationGainM).toBeCloseTo(103, 1);
   });
 
   it("keeps a label and a recovery type when the source has them", () => {

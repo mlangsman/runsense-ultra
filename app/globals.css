@@ -160,6 +160,33 @@ body {
   }
 }
 
+/* A list row. As a button it is the whole-row tap target that opens the workout. */
+.rs-row {
+  display: flex;
+  align-items: center;
+  gap: var(--rs-space-4);
+  width: 100%;
+  min-height: 44px;
+  padding: var(--rs-space-3) var(--rs-space-4);
+  background: none;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+button.rs-row {
+  cursor: pointer;
+}
+button.rs-row:hover {
+  background: var(--rs-bg-tertiary);
+}
+li:first-child > button.rs-row {
+  border-radius: var(--rs-radius) var(--rs-radius) 0 0;
+}
+li:last-child > button.rs-row {
+  border-radius: 0 0 var(--rs-radius) var(--rs-radius);
+}
+
 /* The map frame: tiles sit behind an SVG route, clipped to the card. */
 .rs-map {
   position: relative;

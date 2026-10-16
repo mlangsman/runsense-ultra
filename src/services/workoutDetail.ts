@@ -79,14 +79,11 @@ export async function getWorkoutDetail({
 
 /** Simplify with a growing tolerance until the track is small enough. */
 function compactTrack(points: LatLng[]): LatLng[] {
-  const clean = points.filter(
-    (p) => Array.isArray(p) && Number.isFinite(p[0]) && Number.isFinite(p[1]),
-  );
   let tolerance = START_TOLERANCE_DEG;
-  let track = simplify(clean, tolerance);
+  let track = simplify(points, tolerance);
   while (track.length > MAX_TRACK_POINTS) {
     tolerance *= 2;
-    track = simplify(clean, tolerance);
+    track = simplify(points, tolerance);
   }
   return track;
 }
