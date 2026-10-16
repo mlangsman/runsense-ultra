@@ -47,10 +47,18 @@
   --rs-radius: var(--border-radius-md, 8px);
   --rs-radius-full: var(--border-radius-full, 9999px);
   --rs-font: var(--font-sans, "anthropic-sans", system-ui, sans-serif);
-  --rs-heading-size: var(--font-heading-md-size, 16px);
-  --rs-heading-lh: var(--font-heading-md-line-height, 1.4);
-  --rs-body-size: var(--font-text-sm-size, 14px);
-  --rs-body-lh: var(--font-text-sm-line-height, 1.4);
+  /*
+   * Type scale from the MCP Apps UI kit (Foundations / Typography, read 16 Oct
+   * 2026). Five named styles: Heading 20/25 semibold, Body 16/22.4 regular,
+   * Body emphasized 16/22.4 semibold, Body small 14/19.6 regular, Caption
+   * 12/16.8 regular. Regular and semibold are the only two weights in use.
+   */
+  --rs-heading-size: var(--font-heading-lg-size, 20px);
+  --rs-heading-lh: var(--font-heading-lg-line-height, 25px);
+  --rs-body-size: var(--font-text-md-size, 16px);
+  --rs-body-lh: var(--font-text-md-line-height, 1.4);
+  --rs-small-size: var(--font-text-sm-size, 14px);
+  --rs-small-lh: var(--font-text-sm-line-height, 1.4);
   --rs-caption-size: var(--font-text-xs-size, 12px);
   --rs-caption-lh: var(--font-text-xs-line-height, 1.4);
   --rs-weight-normal: var(--font-weight-normal, 400);
@@ -100,7 +108,11 @@ body {
   font-weight: var(--rs-weight-emphasis);
 }
 .rs-emphasis {
-  font-weight: var(--rs-weight-medium);
+  font-weight: var(--rs-weight-emphasis);
+}
+.rs-small {
+  font-size: var(--rs-small-size);
+  line-height: var(--rs-small-lh);
 }
 .rs-secondary {
   color: var(--rs-text-secondary);
@@ -243,6 +255,8 @@ li:last-child > button.rs-row {
 .rs-table {
   width: 100%;
   border-collapse: collapse;
+  font-size: var(--rs-small-size);
+  line-height: var(--rs-small-lh);
 }
 .rs-table th,
 .rs-table td {

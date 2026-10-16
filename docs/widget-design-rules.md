@@ -25,7 +25,17 @@ border-radius: var(--border-radius-md);
 
 ## Type
 
-Three sizes only: heading, body, caption. Two weights: regular and emphasised. Anthropic Sans comes from the host; local fallback is system-ui.
+From the UI kit's Typography page (read 16 Oct 2026), five named styles and two weights, regular and semibold. Anthropic Sans comes from the host; local fallback is system-ui.
+
+| Style | Size / line height | Weight | Host tokens | Our class | Used for |
+| --- | --- | --- | --- | --- | --- |
+| Heading | 20 / 25 | 600 | `--font-heading-lg-*` | `rs-heading` | The widget title |
+| Body | 16 / 22.4 | 400 | `--font-text-md-*` | body default | Row names, button labels |
+| Body emphasized | 16 / 22.4 | 600 | `--font-text-md-*` | `rs-emphasis` | Stat values, pace in tables |
+| Body small | 14 / 19.6 | 400 | `--font-text-sm-*` | `rs-small` | Meta lines, table cells |
+| Caption | 12 / 16.8 | 400 | `--font-text-xs-*` | `rs-caption` | Labels, axis ticks, attribution |
+
+Colours checked against the kit's Color page, light and dark: every fallback in `globals.css` matches (text primary, secondary, tertiary; backgrounds primary, secondary, tertiary; borders at 40%, 30% and 15%).
 
 ## Maps
 

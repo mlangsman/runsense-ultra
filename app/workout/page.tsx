@@ -72,7 +72,7 @@ export default function WorkoutWidget() {
           <span className="rs-pill">{LABEL[w.sport]}</span>
           <h1 className="rs-heading truncate">{w.name}</h1>
         </div>
-        <span className="rs-caption">
+        <span className="rs-small rs-secondary">
           {heading.day} {heading.date} · {heading.startTime}
         </span>
       </header>
@@ -155,7 +155,7 @@ function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div className="min-w-0">
       <div className="rs-caption">{label}</div>
-      <div className="rs-heading truncate">{value}</div>
+      <div className="rs-emphasis truncate">{value}</div>
     </div>
   );
 }

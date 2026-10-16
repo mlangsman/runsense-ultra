@@ -109,7 +109,7 @@ function Row({ w }: { w: WorkoutRow }) {
           <span className="rs-pill">{LABEL[w.sport]}</span>
           <span className="rs-emphasis truncate">{w.name}</span>
         </div>
-        <div className="rs-caption truncate">{w.meta}</div>
+        <div className="rs-small rs-secondary truncate">{w.meta}</div>
       </div>
     </>
   );
@@ -119,7 +119,7 @@ function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div>
       <div className="rs-caption">{label}</div>
-      <div className="rs-heading">{value}</div>
+      <div className="rs-emphasis">{value}</div>
     </div>
   );
 }
