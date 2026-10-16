@@ -1,7 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
-import type { App } from "@modelcontextprotocol/ext-apps";
+import type { App, McpUiHostContext } from "@modelcontextprotocol/ext-apps";
 
 // ---------------------------------------------------------------------------
 // Session-persistent singleton App instance.
@@ -43,6 +43,13 @@ function write(key: string, value: unknown): void {
 let memConnected = read<boolean>(STORAGE.CONNECTED) ?? false;
 let memToolInput = read<Record<string, unknown>>(STORAGE.INPUT);
 let memToolResult = read<Record<string, unknown>>(STORAGE.RESULT);
+let memHost: HostInfo = { theme: null, hostStyles: false };
+
+export interface HostInfo {
+  theme: "light" | "dark" | null;
+  /** True when the host supplied its own CSS variables for theming. */
+  hostStyles: boolean;
+}
 
 const listeners = new Set<() => void>();
 function notify() {
@@ -51,6 +58,29 @@ function notify() {
 function subscribe(listener: () => void) {
   listeners.add(listener);
   return () => listeners.delete(listener);
+}
+
+// ---------------------------------------------------------------------------
+// Theme: take the host's theme and style variables when it offers them, so
+// the widget blends into the conversation instead of sitting beside it.
+// ---------------------------------------------------------------------------
+
+async function applyHostContext(ctx: McpUiHostContext | undefined) {
+  if (!ctx) return;
+  const { applyDocumentTheme, applyHostStyleVariables, applyHostFonts } =
+    await import("@modelcontextprotocol/ext-apps");
+  if (ctx.theme) applyDocumentTheme(ctx.theme);
+  const variables = ctx.styles?.variables;
+  if (variables && Object.keys(variables).length > 0) {
+    applyHostStyleVariables(variables);
+  }
+  const fonts = ctx.styles?.css?.fonts;
+  if (fonts) applyHostFonts(fonts);
+  memHost = {
+    theme: ctx.theme ?? null,
+    hostStyles: !!variables && Object.keys(variables).length > 0,
+  };
+  notify();
 }
 
 // ---------------------------------------------------------------------------
@@ -65,24 +95,26 @@ async function ensureConnected() {
   const { App } = await import("@modelcontextprotocol/ext-apps");
 
   const app = new App(
-    { name: "mcp-nextjs-widget", version: "0.1.0" },
+    { name: "runsense-widget", version: "0.1.0" },
     {},
     { autoResize: true },
   );
 
   app.ontoolinput = (params) => {
-    console.log("[mcp-app] tool input:", params);
     memToolInput = params.arguments ?? null;
     write(STORAGE.INPUT, memToolInput);
     notify();
   };
 
   app.ontoolresult = (result) => {
-    console.log("[mcp-app] tool result:", result);
     memToolResult =
       (result.structuredContent as Record<string, unknown>) ?? null;
     write(STORAGE.RESULT, memToolResult);
     notify();
+  };
+
+  app.onhostcontextchanged = (ctx) => {
+    void applyHostContext(ctx);
   };
 
   app.onerror = (error) => {
@@ -94,8 +126,8 @@ async function ensureConnected() {
     singletonApp = app;
     memConnected = true;
     write(STORAGE.CONNECTED, true);
-    console.log("[mcp-app] connected to host");
     notify();
+    void applyHostContext(app.getHostContext());
   } catch (err) {
     console.warn("[mcp-app] connect failed (not in MCP host?):", err);
   }
@@ -133,6 +165,11 @@ export function useMcpApp() {
     () => memToolResult,
     () => null,
   );
+  const host = useSyncExternalStore(
+    subscribe,
+    () => memHost,
+    () => memHost,
+  );
 
-  return { app: singletonApp, connected, toolInput, toolResult };
+  return { app: singletonApp, connected, toolInput, toolResult, host };
 }

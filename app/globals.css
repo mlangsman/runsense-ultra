@@ -1,26 +1,100 @@
 @import "tailwindcss";
 
+/*
+ * Design tokens. Each one prefers the host's variable (set on <html> by the
+ * MCP Apps bridge when Claude provides its theme) and falls back to our own
+ * grayscale palette, which follows the host theme or the OS preference.
+ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --rs-fallback-bg-2: #ffffff;
+  --rs-fallback-bg-3: #f1f1ef;
+  --rs-fallback-text-1: #1a1a1a;
+  --rs-fallback-text-2: #5f5f5c;
+  --rs-fallback-text-3: #8a8a86;
+  --rs-fallback-border: #e2e2de;
+  --rs-fallback-inverse-bg: #1a1a1a;
+  --rs-fallback-inverse-text: #ffffff;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+[data-theme="dark"] {
+  --rs-fallback-bg-2: #1f1f1d;
+  --rs-fallback-bg-3: #2a2a28;
+  --rs-fallback-text-1: #ececea;
+  --rs-fallback-text-2: #a7a7a3;
+  --rs-fallback-text-3: #7c7c78;
+  --rs-fallback-border: #343432;
+  --rs-fallback-inverse-bg: #ececea;
+  --rs-fallback-inverse-text: #1a1a1a;
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  :root:not([data-theme="light"]) {
+    --rs-fallback-bg-2: #1f1f1d;
+    --rs-fallback-bg-3: #2a2a28;
+    --rs-fallback-text-1: #ececea;
+    --rs-fallback-text-2: #a7a7a3;
+    --rs-fallback-text-3: #7c7c78;
+    --rs-fallback-border: #343432;
+    --rs-fallback-inverse-bg: #ececea;
+    --rs-fallback-inverse-text: #1a1a1a;
   }
 }
 
+:root {
+  --rs-surface: var(--color-background-secondary, var(--rs-fallback-bg-2));
+  --rs-surface-muted: var(--color-background-tertiary, var(--rs-fallback-bg-3));
+  --rs-text: var(--color-text-primary, var(--rs-fallback-text-1));
+  --rs-text-muted: var(--color-text-secondary, var(--rs-fallback-text-2));
+  --rs-text-faint: var(--color-text-tertiary, var(--rs-fallback-text-3));
+  --rs-border: var(--color-border-secondary, var(--rs-fallback-border));
+  --rs-inverse-bg: var(
+    --color-background-inverse,
+    var(--rs-fallback-inverse-bg)
+  );
+  --rs-inverse-text: var(--color-text-inverse, var(--rs-fallback-inverse-text));
+  --rs-radius: var(--border-radius-lg, 12px);
+  --rs-radius-sm: var(--border-radius-sm, 6px);
+  --rs-font: var(
+    --font-sans,
+    -apple-system,
+    system-ui,
+    "Helvetica Neue",
+    sans-serif
+  );
+}
+
+/* Transparent so the widget sits on the host's own card. */
+html,
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: transparent;
+  color: var(--rs-text);
+  font-family: var(--rs-font);
+  -webkit-font-smoothing: antialiased;
+}
+
+.rs-card {
+  background: var(--rs-surface);
+  border: 1px solid var(--rs-border);
+  border-radius: var(--rs-radius);
+}
+.rs-muted {
+  color: var(--rs-text-muted);
+}
+.rs-faint {
+  color: var(--rs-text-faint);
+}
+.rs-badge {
+  border-radius: var(--rs-radius-sm);
+  background: var(--rs-inverse-bg);
+  color: var(--rs-inverse-text);
+}
+.rs-badge-outline {
+  border-radius: var(--rs-radius-sm);
+  border: 1px solid var(--rs-text);
+  color: var(--rs-text);
+}
+.rs-badge-soft {
+  border-radius: var(--rs-radius-sm);
+  background: var(--rs-surface-muted);
+  color: var(--rs-text);
 }
