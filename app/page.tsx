@@ -1,6 +1,7 @@
 "use client";
 
 import { useMcpApp } from "@/app/hooks/use-mcp-app";
+import { openWorkoutMessage } from "@/src/domain/describe";
 import { formatDuration } from "@/src/domain/workout";
 import type { WorkoutRow } from "@/src/domain/summary";
 
@@ -21,7 +22,7 @@ const LABEL: Record<WorkoutRow["sport"], string> = {
 };
 
 export default function WorkoutsWidget() {
-  const { toolResult, host } = useMcpApp();
+  const { app, toolResult, host } = useMcpApp();
   const result = toolResult as RecentWorkoutsResult | null;
   // The host asks us to keep these edges clear (16px each side on iPhone).
   const frame = {
@@ -36,6 +37,18 @@ export default function WorkoutsWidget() {
   }
 
   const { totals, workouts, days } = result;
+
+  // Tapping a row asks Claude for that workout; the detail widget follows.
+  const open = async (row: WorkoutRow) => {
+    try {
+      await app?.sendMessage({
+        role: "user",
+        content: [{ type: "text", text: openWorkoutMessage(row) }],
+      });
+    } catch (err) {
+      console.warn("[mcp-app] message failed:", err);
+    }
+  };
 
   return (
     <main className="flex flex-col gap-3" style={frame}>
@@ -52,25 +65,26 @@ export default function WorkoutsWidget() {
         <Stat label="Time" value={formatDuration(totals.movingSec)} />
       </section>
 
-      <ul className="rs-card flex flex-col px-4">
+      <ul className="rs-card flex flex-col">
         {workouts.map((w, i) => (
-          <li
-            key={w.id}
-            className={`flex min-h-11 items-center gap-4 py-3 ${i > 0 ? "rs-divider" : ""}`}
-          >
-            <div className="w-10 shrink-0 text-center">
-              <div className="rs-caption">{w.day}</div>
-              <div className="rs-emphasis leading-tight">
-                {w.date.split(" ")[0]}
+          <li key={w.id} className={i > 0 ? "rs-divider" : ""}>
+            {host.canMessage ? (
+              <button
+                type="button"
+                className="rs-row"
+                onClick={() => open(w)}
+                aria-label={`Open ${w.name}, ${w.day} ${w.date}`}
+              >
+                <Row w={w} />
+                <span className="rs-caption" aria-hidden="true">
+                  ›
+                </span>
+              </button>
+            ) : (
+              <div className="rs-row">
+                <Row w={w} />
               </div>
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2">
-                <span className="rs-pill">{LABEL[w.sport]}</span>
-                <span className="rs-emphasis truncate">{w.name}</span>
-              </div>
-              <div className="rs-caption truncate">{w.meta}</div>
-            </div>
+            )}
           </li>
         ))}
         {workouts.length === 0 && (
@@ -78,6 +92,24 @@ export default function WorkoutsWidget() {
         )}
       </ul>
     </main>
+  );
+}
+
+function Row({ w }: { w: WorkoutRow }) {
+  return (
+    <>
+      <div className="w-10 shrink-0 text-center">
+        <div className="rs-caption">{w.day}</div>
+        <div className="rs-emphasis leading-tight">{w.date.split(" ")[0]}</div>
+      </div>
+      <div className="min-w-0 flex-1 text-left">
+        <div className="flex items-center gap-2">
+          <span className="rs-pill">{LABEL[w.sport]}</span>
+          <span className="rs-emphasis truncate">{w.name}</span>
+        </div>
+        <div className="rs-caption truncate">{w.meta}</div>
+      </div>
+    </>
   );
 }
 

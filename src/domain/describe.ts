@@ -5,7 +5,7 @@
 
 import type { Lap, Workout } from "./workout";
 import type { Split } from "./splits";
-import { toWorkoutRow } from "./summary";
+import { toWorkoutRow, type WorkoutRow } from "./summary";
 import {
   formatDistanceKm,
   formatDuration,
@@ -84,4 +84,13 @@ export function describeWorkoutDetail({
   }
   if (polyline) out.push("GPS route available; the widget shows the map.");
   return out.join("\n");
+}
+
+/**
+ * What the history widget posts to the chat when a row is tapped. The
+ * conversation is the navigation: Claude reads this, calls get_workout and
+ * the detail widget renders. The id makes the call unambiguous.
+ */
+export function openWorkoutMessage(row: WorkoutRow): string {
+  return `Show me the ${row.name} on ${row.day} ${row.date} in detail (workout ${row.id}).`;
 }

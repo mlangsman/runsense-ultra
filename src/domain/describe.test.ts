@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { describeWorkoutDetail, formatStartTime } from "./describe";
+import {
+  describeWorkoutDetail,
+  formatStartTime,
+  openWorkoutMessage,
+} from "./describe";
 import type { Lap, Workout } from "./workout";
 import type { Split } from "./splits";
 
@@ -89,5 +93,20 @@ describe("describeWorkoutDetail", () => {
     expect(text).toBe(
       "Strength (strength), Sun 11 Oct 08:15: 1:08:16 moving (1:09:54 elapsed).",
     );
+  });
+});
+
+describe("openWorkoutMessage", () => {
+  it("asks Claude for the workout by name, date and id so it calls get_workout", () => {
+    expect(
+      openWorkoutMessage({
+        id: "i1001",
+        sport: "run",
+        day: "Sun",
+        date: "11 Oct",
+        name: "Morning run",
+        meta: "12.6 km",
+      }),
+    ).toBe("Show me the Morning run on Sun 11 Oct in detail (workout i1001).");
   });
 });

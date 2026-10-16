@@ -51,6 +51,7 @@ let memHost: HostInfo = {
   displayMode: null,
   availableDisplayModes: null,
   safeArea: NO_INSETS,
+  canMessage: false,
 };
 
 export interface HostInfo {
@@ -63,6 +64,8 @@ export interface HostInfo {
   availableDisplayModes: string[] | null;
   /** Pixels the host asks us to keep clear on each edge. */
   safeArea: { top: number; right: number; bottom: number; left: number };
+  /** True when the host lets the widget post a message into the chat. */
+  canMessage: boolean;
 }
 
 const listeners = new Set<() => void>();
@@ -92,6 +95,7 @@ async function applyHostContext(ctx: McpUiHostContext | undefined) {
   if (fonts) applyHostFonts(fonts);
   const insets = ctx.safeAreaInsets as Partial<typeof NO_INSETS> | undefined;
   memHost = {
+    ...memHost,
     theme: ctx.theme ?? memHost.theme,
     hostStyles:
       memHost.hostStyles || (!!variables && Object.keys(variables).length > 0),
@@ -152,6 +156,10 @@ async function ensureConnected() {
     singletonApp = app;
     memConnected = true;
     write(STORAGE.CONNECTED, true);
+    memHost = {
+      ...memHost,
+      canMessage: app.getHostCapabilities()?.message != null,
+    };
     notify();
     void applyHostContext(app.getHostContext());
   } catch (err) {
