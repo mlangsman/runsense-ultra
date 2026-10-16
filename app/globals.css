@@ -48,13 +48,14 @@
   --rs-radius-full: var(--border-radius-full, 9999px);
   --rs-font: var(--font-sans, "anthropic-sans", system-ui, sans-serif);
   /*
-   * Type scale from the MCP Apps UI kit (Foundations / Typography, read 16 Oct
-   * 2026). Five named styles: Heading 20/25 semibold, Body 16/22.4 regular,
-   * Body emphasized 16/22.4 semibold, Body small 14/19.6 regular, Caption
+   * Type scale from the MCP Apps UI kit (Foundations / Typography and the
+   * Inline card examples, read 16 Oct 2026). Body 16/22.4 regular, Body
+   * emphasized 16/22.4 semibold (card titles and stat values: the kit's inline
+   * cards never use the 20px Heading), Body small 14/19.6 regular, Caption
    * 12/16.8 regular. Regular and semibold are the only two weights in use.
    */
-  --rs-heading-size: var(--font-heading-lg-size, 20px);
-  --rs-heading-lh: var(--font-heading-lg-line-height, 25px);
+  --rs-heading-size: var(--font-heading-md-size, 16px);
+  --rs-heading-lh: var(--font-heading-md-line-height, 1.4);
   --rs-body-size: var(--font-text-md-size, 16px);
   --rs-body-lh: var(--font-text-md-line-height, 1.4);
   --rs-small-size: var(--font-text-sm-size, 14px);
@@ -91,6 +92,8 @@ body {
   font-weight: var(--rs-weight-normal);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  /* The kit sets Anthropic Sans's stylistic alternates on all text. */
+  font-feature-settings: "salt" 1;
 }
 
 /* Claude's card recipe from the design guidelines. */
@@ -113,6 +116,9 @@ body {
 .rs-small {
   font-size: var(--rs-small-size);
   line-height: var(--rs-small-lh);
+}
+.rs-caption-color {
+  color: var(--rs-text-tertiary);
 }
 .rs-secondary {
   color: var(--rs-text-secondary);
@@ -148,19 +154,26 @@ body {
   }
 }
 
-/* A quiet secondary button: Claude's card recipe with a pill shape. Tap targets grow on touch screens. */
+/*
+ * The kit's secondary button (Desktop web components / Button): 36px tall,
+ * 16px side padding, 8px radius, half-pixel primary border, no fill, Body
+ * small emphasized label. Tap targets grow to the kit's 44px mobile size on
+ * touch screens.
+ */
 .rs-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   min-height: 36px;
   padding: 0 var(--rs-space-4);
-  border-radius: var(--rs-radius-full);
-  background: var(--rs-bg-secondary);
+  border-radius: var(--rs-radius);
+  background: transparent;
   border: var(--rs-border-width) solid var(--rs-border);
   color: var(--rs-text);
   font: inherit;
-  font-weight: var(--rs-weight-medium);
+  font-size: var(--rs-small-size);
+  line-height: var(--rs-small-lh);
+  font-weight: var(--rs-weight-emphasis);
   cursor: pointer;
 }
 .rs-button:hover {

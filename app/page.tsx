@@ -107,9 +107,9 @@ function Row({ w }: { w: WorkoutRow }) {
       <div className="min-w-0 flex-1 text-left">
         <div className="flex items-center gap-2">
           <span className="rs-pill">{LABEL[w.sport]}</span>
-          <span className="rs-emphasis truncate">{w.name}</span>
+          <span className="truncate">{w.name}</span>
         </div>
-        <div className="rs-small rs-secondary truncate">{w.meta}</div>
+        <div className="rs-small rs-caption-color truncate">{w.meta}</div>
       </div>
     </>
   );

@@ -25,15 +25,18 @@ border-radius: var(--border-radius-md);
 
 ## Type
 
-From the UI kit's Typography page (read 16 Oct 2026), five named styles and two weights, regular and semibold. Anthropic Sans comes from the host; local fallback is system-ui.
+From the UI kit (Typography page and the Inline card examples, read 16 Oct 2026). Anthropic Sans comes from the host as `--font-sans`; the kit also sets `font-feature-settings: "salt" 1` on all text. Local fallback is system-ui. Two weights only, regular and semibold.
 
 | Style | Size / line height | Weight | Host tokens | Our class | Used for |
 | --- | --- | --- | --- | --- | --- |
-| Heading | 20 / 25 | 600 | `--font-heading-lg-*` | `rs-heading` | The widget title |
-| Body | 16 / 22.4 | 400 | `--font-text-md-*` | body default | Row names, button labels |
-| Body emphasized | 16 / 22.4 | 600 | `--font-text-md-*` | `rs-emphasis` | Stat values, pace in tables |
-| Body small | 14 / 19.6 | 400 | `--font-text-sm-*` | `rs-small` | Meta lines, table cells |
+| Body emphasized | 16 / 22.4 | 600 | `--font-heading-md-*` | `rs-heading`, `rs-emphasis` | Card titles, stat values, pace in tables |
+| Body | 16 / 22.4 | 400 | `--font-text-md-*` | body default | Row names |
+| Body small | 14 / 19.6 | 400 | `--font-text-sm-*` | `rs-small` | Meta lines, table cells, button labels (semibold) |
 | Caption | 12 / 16.8 | 400 | `--font-text-xs-*` | `rs-caption` | Labels, axis ticks, attribution |
+
+The kit's 20px and larger headings appear on full pages, never inside an inline card; the card examples title with Body emphasized.
+
+What the kit's list cards do, which ours follow: rows at least 44px tall with 16px side padding, a 16px gap between the leading column and the text, name in Body and meta in Body small tertiary, half-pixel tertiary dividers, and a quiet footer in Caption. The secondary button is 36px tall, 16px side padding, 8px radius, half-pixel primary border, no fill, 14px semibold label.
 
 Colours checked against the kit's Color page, light and dark: every fallback in `globals.css` matches (text primary, secondary, tertiary; backgrounds primary, secondary, tertiary; borders at 40%, 30% and 15%).
 
