@@ -62,6 +62,7 @@ One line per decision, oldest first. Kept concise for the engineering write-up. 
 - [ ] Coach concept: leaning towards rich answers (concept 3) with the coach thread's proactive comments (concept 1). Waiting on Marc's review of the mocks.
 - [ ] intervals.icu webhooks for OAuth apps: unverified. Fallback is the 15-minute scheduled sync.
 - [ ] Which training-load model drives volume warnings.
+- [ ] Claude's `ui/message` banner ([claude-ai-mcp#1111](https://github.com/anthropics/claude-ai-mcp/issues/1111)): if Claude starts trusting a real click, consider dropping the in-card drill-down (branch `feat/in-card-drilldown`) and going back to the row posting to the chat, which is what the design guidelines prefer. Marc to comment on the thread with the Runsense case.
 - [ ] Figma font errors ("Anthropic Sans Text does not exist", and edits failing inside kit frames): check whether installing Anthropic Sans on Marc's device, or uploading it as a Figma font, makes the connector load it. If so, rebuild the Runsense frames' text in Anthropic Sans and drop the Inter swap.
 
 ## Rendering notes: getting a widget to look like Claude (16 Oct 2026)
@@ -78,6 +79,9 @@ What went wrong in the first day of widget work, what Anthropic's [design guidel
 | Mobile shows no theme or tokens | Claude for iOS sends only `safeAreaInsets` today; desktop sends theme, all tokens and the font files | Fallbacks are the exact documented token values, so both platforms render the same |
 | Cards, pills and bars invisible wherever the host sent no tokens (iPhone, and local rendering) | Our fallbacks used `light-dark()`. The CSS compiler rewrites it into helper variables that it only switches on where it sees a `color-scheme` declaration in CSS, and we only had the meta tag, so every fallback became an invalid colour | Declare `color-scheme: light dark` on `:root`, and `light`/`dark` under the host's `data-theme` attribute. Found by rendering the widget headless with fixture data, now part of checking a widget |
 | Claude kept offering Strava alongside Runsense | Two connectors answer the same question; a disabled connector still appears in the chooser | Remove Strava while testing; a Coach project instruction settles it later; keep our tool descriptions specific |
+| Heading clipped and rows flush to the sides once the host drew the frame (17 Oct) | With `prefersBorder: true` we padded only by the host's safe-area insets, which are 0 on web and desktop | Pad the root by `max(16px, inset)` on every side (`framePadding`); the insets never stack on iPhone |
+| Tapping a row put text the user didn't write into the composer under a red "Use caution before sending" banner (17 Oct) | Claude treats a widget's `ui/message` as untrusted and makes the user send it; open request [claude-ai-mcp#1111](https://github.com/anthropics/claude-ai-mcp/issues/1111), no reply from Anthropic yet | Drill in inside the card instead: the widget calls `get_workout` itself (`tools/call`) and reports what is on screen with `ui/update-model-context`; `ui/message` only as the fallback. Built on `feat/in-card-drilldown` for a one-step revert |
+| "Allow this connector?" before every Runsense tool call (17 Oct) | Claude's own permission step for any connector tool; our tools already declare `readOnlyHint`, which is all a server can do | Nothing in code. The user picks "Always allow" on the prompt, or sets it per tool in the connector's settings |
 
 ![First render: own panel and nested cards](docs/images/rendering/01-first-render-nested-cards.png)
 
