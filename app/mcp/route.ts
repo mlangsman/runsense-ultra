@@ -37,23 +37,25 @@ async function fetchPageHtml(path: string): Promise<string> {
   return res.text();
 }
 
-const widgetMeta = {
+const widgetMeta = (prefersBorder: boolean) => ({
   ui: {
-    // Claude web is borderless by default; be explicit for other hosts.
-    prefersBorder: false,
+    // The history widget is flat (no cards of its own) and asks the host to
+    // draw the frame; the detail widget draws cards and stays borderless.
+    prefersBorder,
     csp: {
       connectDomains: [baseURL],
       // assets.claude.ai serves Anthropic Sans for applyHostFonts.
       resourceDomains: [baseURL, "https://assets.claude.ai", TILE_DOMAIN],
     },
   },
-};
+});
 
 function registerWidget(
   server: Parameters<typeof registerAppResource>[0],
   name: string,
   uri: string,
   path: string,
+  prefersBorder = false,
 ) {
   registerAppResource(
     server,
@@ -66,7 +68,7 @@ function registerWidget(
           uri,
           mimeType: RESOURCE_MIME_TYPE,
           text: await fetchPageHtml(path),
-          _meta: widgetMeta,
+          _meta: widgetMeta(prefersBorder),
         },
       ],
     }),
@@ -80,10 +82,10 @@ const readOnly = {
 };
 
 const handler = createMcpHandler(async (server) => {
-  registerWidget(server, "workouts-widget", HISTORY_URI, "/");
+  registerWidget(server, "workouts-widget", HISTORY_URI, "/", true);
   registerWidget(server, "workout-widget", DETAIL_URI, "/workout");
   LEGACY_RESOURCE_URIS.forEach((uri, i) =>
-    registerWidget(server, `workouts-widget-legacy-${i + 1}`, uri, "/"),
+    registerWidget(server, `workouts-widget-legacy-${i + 1}`, uri, "/", true),
   );
 
   registerAppTool(

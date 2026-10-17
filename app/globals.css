@@ -211,14 +211,19 @@ body {
   }
 }
 
-/* A list row. As a button it is the whole-row tap target that opens the workout. */
+/*
+ * A list row, flat on the host's card (Figma redesign, 17 Oct 2026): no side
+ * padding, a hairline divider between rows, a 52px date box on the left. As a
+ * button it is the whole row, with a quiet hover fill that bleeds 8px past the
+ * text so it reads as one tap target.
+ */
 .rs-row {
   display: flex;
   align-items: center;
   gap: var(--rs-space-4);
   width: 100%;
   min-height: 44px;
-  padding: var(--rs-space-3) var(--rs-space-4);
+  padding: var(--rs-space-3) 0;
   background: none;
   border: 0;
   color: inherit;
@@ -226,6 +231,10 @@ body {
   text-align: left;
 }
 button.rs-row {
+  width: calc(100% + 2 * var(--rs-space-2));
+  margin: 0 calc(-1 * var(--rs-space-2));
+  padding-inline: var(--rs-space-2);
+  border-radius: var(--rs-radius);
   cursor: pointer;
 }
 button.rs-row:hover {
@@ -235,11 +244,17 @@ button.rs-row:focus-visible {
   outline: 2px solid var(--rs-text-tertiary);
   outline-offset: -2px;
 }
-li:first-child > button.rs-row {
-  border-radius: var(--rs-radius) var(--rs-radius) 0 0;
-}
-li:last-child > button.rs-row {
-  border-radius: 0 0 var(--rs-radius) var(--rs-radius);
+/* The date box: day above the number, in a hairline square. */
+.rs-date {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 52px;
+  height: 52px;
+  border: 1px solid var(--rs-border-tertiary);
+  border-radius: var(--rs-radius);
 }
 
 /* The map frame: tiles sit behind an SVG route, clipped to the card. */

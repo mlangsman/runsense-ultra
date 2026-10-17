@@ -6,7 +6,7 @@ Distilled from Anthropic's [MCP Apps design guidelines](https://claude.com/docs/
 
 - Never paint `html` or `body`. Keep them transparent so the chat surface shows through.
 - Put `<meta name="color-scheme" content="light dark">` in the head, or the browser paints an opaque white or black backdrop behind the frame. Also declare `color-scheme: light dark` on `:root` in CSS: the CSS compiler rewrites `light-dark()` fallbacks into helper variables that only switch on where it sees that declaration, and without it every fallback is an invalid colour.
-- Ask for a borderless frame with `_meta.ui.prefersBorder: false`. Claude web is borderless by default; mobile is bordered unless told otherwise.
+- Decide per widget who draws the card. A flat widget (the history list) asks the host for its frame with `_meta.ui.prefersBorder: true`; a widget that draws its own cards (the workout detail) stays borderless. Never both: that is the double-border problem from the first day.
 - Allow `https://assets.claude.ai` in `resourceDomains` so Anthropic Sans loads via `applyHostFonts`.
 - Style everything structural from the host variables: `--color-background-*`, `--color-text-*`, `--color-border-*`, `--font-*`, `--border-radius-*`, `--border-width-regular`. Our own colour is for accents only.
 
@@ -40,7 +40,7 @@ From the UI kit (Typography page and the Inline card examples, read 16 Oct 2026)
 
 The kit's 20px and larger headings appear on full pages, never inside an inline card; the card examples title with Body emphasized.
 
-What the kit's list cards do, which ours follow: rows at least 44px tall with 16px side padding, a 16px gap between the leading column and the text, name in Body and meta in Body small tertiary, half-pixel tertiary dividers, and a quiet footer in Caption. The secondary button is 36px tall, 16px side padding, 8px radius, half-pixel primary border, no fill, 14px semibold label.
+The history list follows Marc's Figma redesign (17 Oct 2026): flat on the host's card, totals as a plain row of three stats, rows at least 44px tall with no side padding and hairline dividers, a 52px hairline date box (day over number) on the left, the name first with the sport pill after it, meta in Body small tertiary, and no chevron. The secondary button is 36px tall, 16px side padding, 8px radius, half-pixel primary border, no fill, 14px semibold label.
 
 Colours checked against the kit's Color page, light and dark: every fallback in `globals.css` matches (text primary, secondary, tertiary; backgrounds primary, secondary, tertiary; borders at 40%, 30% and 15%).
 
