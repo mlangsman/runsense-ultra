@@ -51,9 +51,9 @@ A static map: tile images placed by our own geometry with the route drawn over t
 ## Inline cards
 
 - Height fits content. No nested vertical scrolling; the conversation owns it and the host caps inline height.
-- At most two actions, at the bottom. At most four or five data points. No drill-ins, breadcrumbs or multiple views.
+- At most two actions, at the bottom. At most four or five data points. The guidelines say no drill-ins, breadcrumbs or multiple views; our one exception is the list-to-detail swap below, kept to one level with one way back.
 - Visible controls only: segmented buttons, chips, inline tabs. No dropdowns, menus or popovers.
-- A row that opens something is one edge-to-edge button with a hover fill, and it works by sending a chat message (`ui/message`) so Claude renders the next widget. Only render it as a button when the host advertises the `message` capability; otherwise show plain rows, so nothing looks clickable that is not.
+- A row that opens something is one edge-to-edge button with a hover fill. Where the host advertises `serverTools`, the widget fetches the detail itself (`tools/call`), swaps it in for the list with a quiet "‹ All workouts" text button at the top, and reports what is on screen with `ui/update-model-context`. Where it only advertises `message`, the row sends a chat message (`ui/message`) and Claude renders the next widget; in Claude today that lands in the composer under a caution banner, which is why the drill-down exists. With neither capability, show plain rows, so nothing looks clickable that is not.
 - Anything needing its own scroll goes to full screen via `ui/request-display-mode`.
 
 ## Mobile

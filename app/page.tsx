@@ -1,6 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import { framePadding, useMcpApp } from "@/app/hooks/use-mcp-app";
+import {
+  SPORT_LABEL,
+  WorkoutDetail,
+  WorkoutDetailSkeleton,
+  type WorkoutDetailResult,
+} from "@/app/components/workout-detail";
 import { openWorkoutMessage } from "@/src/domain/describe";
 import { formatDuration } from "@/src/domain/workout";
 import type { WorkoutRow } from "@/src/domain/summary";
@@ -12,29 +19,85 @@ interface RecentWorkoutsResult {
   workouts: WorkoutRow[];
 }
 
-const LABEL: Record<WorkoutRow["sport"], string> = {
-  run: "Run",
-  ride: "Ride",
-  strength: "Gym",
-  swim: "Swim",
-  walk: "Walk",
-  other: "Other",
-};
+/** The row the user tapped, and its detail once `get_workout` has answered. */
+interface Opened {
+  row: WorkoutRow;
+  detail: WorkoutDetailResult | null;
+}
 
 export default function WorkoutsWidget() {
   const { app, toolResult, host } = useMcpApp();
   const result = toolResult as RecentWorkoutsResult | null;
   // 16px inset, or the host's safe-area inset where that is larger.
   const frame = framePadding(host);
+  const [opened, setOpened] = useState<Opened | null>(null);
 
   if (!result?.workouts) {
     return <Skeleton style={frame} />;
   }
 
-  const { totals, workouts, days } = result;
+  // Drilled in: the detail takes the list's place until the user goes back.
+  if (opened) {
+    const back = () => setOpened(null);
+    return opened.detail ? (
+      <WorkoutDetail
+        result={opened.detail}
+        app={app}
+        host={host}
+        style={frame}
+        onBack={back}
+      />
+    ) : (
+      <WorkoutDetailSkeleton style={frame} onBack={back} />
+    );
+  }
 
-  // Tapping a row asks Claude for that workout; the detail widget follows.
+  const { totals, workouts, days } = result;
+  const interactive = host.canCallTools || host.canMessage;
+
+  /**
+   * Tapping a row opens the workout. Where the host lets the widget call the
+   * server's tools, we fetch it ourselves and show it here, telling Claude
+   * what is on screen. Otherwise, or if that fails, we fall back to asking
+   * Claude in the chat, which the host puts in the composer for the user to
+   * send.
+   */
   const open = async (row: WorkoutRow) => {
+    if (host.canCallTools && app) {
+      setOpened({ row, detail: null });
+      try {
+        const res = await app.callServerTool({
+          name: "get_workout",
+          arguments: { id: row.id },
+        });
+        const detail = res.structuredContent as WorkoutDetailResult | undefined;
+        if (res.isError || !detail?.workout) {
+          throw new Error(res.isError ? "tool returned an error" : "no detail");
+        }
+        // Ignore a late answer if the user has already gone back.
+        setOpened((cur) => (cur?.row.id === row.id ? { row, detail } : cur));
+        if (host.canUpdateContext) {
+          void app
+            .updateModelContext({
+              content: [
+                {
+                  type: "text",
+                  text: `The user opened ${row.name} (${row.day} ${row.date}, workout ${row.id}) inside the workouts widget and can see its map, stats and splits.`,
+                },
+              ],
+            })
+            .catch(() => {});
+        }
+        return;
+      } catch (err) {
+        void app.sendLog({
+          level: "error",
+          data: `get_workout from the widget failed: ${String(err)}`,
+        });
+        setOpened(null);
+      }
+    }
+    if (!host.canMessage) return;
     try {
       const result = await app?.sendMessage({
         role: "user",
@@ -74,7 +137,7 @@ export default function WorkoutsWidget() {
       <ul className="flex flex-col">
         {workouts.map((w, i) => (
           <li key={w.id} className={i > 0 ? "rs-divider" : ""}>
-            {host.canMessage ? (
+            {interactive ? (
               <button
                 type="button"
                 className="rs-row"
@@ -109,7 +172,7 @@ function Row({ w }: { w: WorkoutRow }) {
         <div className="flex items-center gap-2">
           <span className="truncate">{w.name}</span>
           <span className="rs-pill" data-sport={w.sport}>
-            {LABEL[w.sport]}
+            {SPORT_LABEL[w.sport]}
           </span>
         </div>
         <div className="rs-small rs-caption-color truncate">{w.meta}</div>
