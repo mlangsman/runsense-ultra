@@ -28,6 +28,10 @@ export interface HostInfo {
   safeArea: { top: number; right: number; bottom: number; left: number };
   /** True when the host lets the widget post a message into the chat. */
   canMessage: boolean;
+  /** True when the host lets the widget call the server's tools itself. */
+  canCallTools: boolean;
+  /** True when the host accepts `ui/update-model-context` from the widget. */
+  canUpdateContext: boolean;
 }
 
 const INITIAL_HOST: HostInfo = {
@@ -37,6 +41,8 @@ const INITIAL_HOST: HostInfo = {
   availableDisplayModes: null,
   safeArea: NO_INSETS,
   canMessage: false,
+  canCallTools: false,
+  canUpdateContext: false,
 };
 
 /** Merge a host context notification (always partial) into what we know. */
@@ -108,6 +114,8 @@ export function useMcpApp() {
     () => ({
       ...mergeHost(INITIAL_HOST, app?.getHostContext()),
       canMessage: app?.getHostCapabilities()?.message != null,
+      canCallTools: app?.getHostCapabilities()?.serverTools != null,
+      canUpdateContext: app?.getHostCapabilities()?.updateModelContext != null,
     }),
     // contextVersion is the signal that getHostContext() has new content.
     // eslint-disable-next-line react-hooks/exhaustive-deps
