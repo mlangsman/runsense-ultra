@@ -24,3 +24,6 @@ coverage/
 .vscode/*
 !.vscode/extensions.json
 .env*
+
+# Personal Claude Code settings
+.claude/settings.local.json
