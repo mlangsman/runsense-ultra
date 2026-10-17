@@ -60,7 +60,7 @@ A static map: tile images placed by our own geometry with the route drawn over t
 
 - Fill the width; design from 320px up with no fixed widths.
 - Tap targets at least 44 by 44 points, with space between them.
-- Honour `hostContext.safeAreaInsets` as padding so the composer and nav bar never cover controls.
+- Pad the root by 16px on every side, or by `hostContext.safeAreaInsets` where that is larger, so content clears the host's rounded frame and the composer and nav bar never cover controls (`framePadding` in the hook).
 - Both themes always; test both.
 
 ## Loading

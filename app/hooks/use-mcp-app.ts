@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type CSSProperties } from "react";
 import {
   useApp,
   useHostFonts,
@@ -123,5 +123,20 @@ export function useMcpApp() {
     // Outside a host (a headless render) fall back to the fixture a script left behind.
     toolResult: toolResult ?? (error ? fixture : null),
     host,
+  };
+}
+
+/**
+ * Padding for a widget's root: a 16px inset on every side (the kit's card
+ * inset, so content clears the host's rounded frame) that grows to the
+ * host's safe-area inset where that is larger. Insets never stack on it.
+ */
+export function framePadding(host: HostInfo): CSSProperties {
+  const side = (inset: number) => `max(var(--rs-space-4, 16px), ${inset}px)`;
+  return {
+    paddingTop: side(host.safeArea.top),
+    paddingRight: side(host.safeArea.right),
+    paddingBottom: side(host.safeArea.bottom),
+    paddingLeft: side(host.safeArea.left),
   };
 }
