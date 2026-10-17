@@ -15,6 +15,7 @@ import {
   IntervalsIcuError,
   intervalsIcuClientFromEnv,
 } from "@/src/sources/intervals-icu/client";
+import { tileOrigins, tileSourceFromEnv } from "@/src/sources/tiles/config";
 
 /**
  * Each widget lives at ONE stable address. Claude caches a connector's tool
@@ -30,7 +31,7 @@ const LEGACY_RESOURCE_URIS = [1, 2, 3, 4].map(
 );
 
 /** Map tiles. Images only, so they go in resourceDomains, not connectDomains. */
-const TILE_DOMAIN = "https://basemaps.cartocdn.com";
+const TILE_DOMAINS = tileOrigins(tileSourceFromEnv());
 
 async function fetchPageHtml(path: string): Promise<string> {
   const res = await fetch(`${baseURL}${path}`, { cache: "no-store" });
@@ -45,7 +46,7 @@ const widgetMeta = (prefersBorder: boolean) => ({
     csp: {
       connectDomains: [baseURL],
       // assets.claude.ai serves Anthropic Sans for applyHostFonts.
-      resourceDomains: [baseURL, "https://assets.claude.ai", TILE_DOMAIN],
+      resourceDomains: [baseURL, "https://assets.claude.ai", ...TILE_DOMAINS],
     },
   },
 });

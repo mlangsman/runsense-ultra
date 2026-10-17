@@ -116,19 +116,29 @@ function project0Bounds(track: LatLng[]) {
 }
 
 export interface TileUrlOptions {
-  /** CARTO style name, for instance `light_all` or `dark_all`. */
-  style: string;
-  /** Request 512px tiles for high-density screens. */
+  /**
+   * A raster tile URL template with `{z}`, `{x}`, `{y}` and optionally `{r}`,
+   * the OpenStreetMap convention every provider documents. Any key travels in
+   * the template itself.
+   */
+  template: string;
+  /** Request 2x tiles for high-density screens; fills `{r}` with `@2x`. */
   retina?: boolean;
-  /** CARTO basemaps key; required since 25 Sep 2026 or tiles come back watermarked. */
-  key: string;
 }
 
-/** The address of one CARTO raster tile. */
+/** The address of one raster tile. */
 export function tileUrl(
   { z, x, y }: Pick<Tile, "z" | "x" | "y">,
-  opts: TileUrlOptions,
+  { template, retina = false }: TileUrlOptions,
 ): string {
-  const size = opts.retina ? "@2x" : "";
-  return `https://basemaps.cartocdn.com/${opts.style}/${z}/${x}/${y}${size}.png?key=${encodeURIComponent(opts.key)}`;
+  return template
+    .replace("{z}", String(z))
+    .replace("{x}", String(x))
+    .replace("{y}", String(y))
+    .replace("{r}", retina ? "@2x" : "");
+}
+
+/** CARTO's free basemaps, the default tile source; the key is required since 25 Sep 2026. */
+export function cartoTileTemplate(style: string, key: string): string {
+  return `https://basemaps.cartocdn.com/${style}/{z}/{x}/{y}{r}.png?key=${encodeURIComponent(key)}`;
 }

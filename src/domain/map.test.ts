@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { layoutStaticMap, project, tileUrl } from "./map";
+import { cartoTileTemplate, layoutStaticMap, project, tileUrl } from "./map";
 import type { LatLng } from "./route";
 
 describe("project", () => {
@@ -102,18 +102,37 @@ describe("layoutStaticMap", () => {
 });
 
 describe("tileUrl", () => {
-  it("addresses a CARTO raster tile with the style and key", () => {
-    expect(
-      tileUrl({ z: 13, x: 4092, y: 2721 }, { style: "light_all", key: "abc" }),
-    ).toBe("https://basemaps.cartocdn.com/light_all/13/4092/2721.png?key=abc");
-  });
-
-  it("asks for 2x tiles on dense screens and escapes the key", () => {
+  it("fills the template's z, x and y", () => {
     expect(
       tileUrl(
-        { z: 1, x: 0, y: 1 },
-        { style: "dark_all", retina: true, key: "a b&c" },
+        { z: 13, x: 4092, y: 2721 },
+        {
+          template: "https://tiles.example/outdoors/{z}/{x}/{y}.png?apikey=abc",
+        },
       ),
-    ).toBe("https://basemaps.cartocdn.com/dark_all/1/0/1@2x.png?key=a%20b%26c");
+    ).toBe("https://tiles.example/outdoors/13/4092/2721.png?apikey=abc");
+  });
+
+  it("asks for 2x tiles on dense screens where the template allows, else leaves the slot empty", () => {
+    const template = "https://tiles.example/{z}/{x}/{y}{r}.png";
+    expect(tileUrl({ z: 1, x: 0, y: 1 }, { template, retina: true })).toBe(
+      "https://tiles.example/1/0/1@2x.png",
+    );
+    expect(tileUrl({ z: 1, x: 0, y: 1 }, { template })).toBe(
+      "https://tiles.example/1/0/1.png",
+    );
+  });
+});
+
+describe("cartoTileTemplate", () => {
+  it("addresses CARTO's basemaps with the style and the escaped key", () => {
+    expect(
+      tileUrl(
+        { z: 13, x: 4092, y: 2721 },
+        { template: cartoTileTemplate("light_all", "a b&c") },
+      ),
+    ).toBe(
+      "https://basemaps.cartocdn.com/light_all/13/4092/2721.png?key=a%20b%26c",
+    );
   });
 });

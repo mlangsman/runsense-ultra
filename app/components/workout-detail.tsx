@@ -15,6 +15,7 @@ import type { WorkoutRow } from "@/src/domain/summary";
 import type { Split } from "@/src/domain/splits";
 import { decodePolyline } from "@/src/domain/route";
 import { layoutStaticMap, tileUrl } from "@/src/domain/map";
+import { tileSourceFromEnv } from "@/src/sources/tiles/config";
 
 /** The structured content of a `get_workout` result. */
 export interface WorkoutDetailResult {
@@ -25,12 +26,8 @@ export interface WorkoutDetailResult {
   laps: Lap[];
 }
 
-/**
- * CARTO has required a key on every raster tile since 25 Sep 2026; without one
- * the tiles come back as an "API KEY REQUIRED" watermark. Inlined at build
- * time; with no key the route draws on a plain card.
- */
-const TILE_KEY = process.env.NEXT_PUBLIC_CARTO_API_KEY ?? "";
+/** Settled at build time from the public settings; null means no tiles and the route draws on a plain card. */
+const TILES = tileSourceFromEnv();
 
 export const SPORT_LABEL: Record<Workout["sport"], string> = {
   run: "Run",
@@ -186,7 +183,7 @@ function Stat({ label, value }: { label: string; value: string }) {
 /**
  * Tiles behind an SVG route. The tile grid and the route's pixel path come
  * from the domain maths; this component only measures the frame and places
- * images. If there is no tile key, or a tile fails to load (for instance,
+ * images. If there is no tile source, or a tile fails to load (for instance,
  * blocked by the host's content policy), the tiles are dropped and the route
  * stays on a plain card, so the widget degrades to a vector map rather than
  * breaking.
@@ -229,9 +226,8 @@ function StaticMap({
   const track = decodePolyline(polyline);
   const layout =
     width > 0 ? layoutStaticMap({ track, width, height, padding: 24 }) : null;
-  // Voyager is CARTO's coloured style, close to the maps in Anthropic's kit; it has no dark variant, so dark mode keeps Dark Matter under a coloured route.
-  const style = dark ? "dark_all" : "rastertiles/voyager";
-  const showTiles = TILE_KEY !== "" && !tilesFailed;
+  const template = TILES ? TILES[dark ? "dark" : "light"] : null;
+  const showTiles = template !== null && !tilesFailed;
   const start = layout?.path[0];
   const end = layout?.path[layout.path.length - 1];
 
@@ -243,6 +239,7 @@ function StaticMap({
       aria-label="Route map"
     >
       {layout &&
+        template &&
         showTiles &&
         layout.tiles.map((t) => (
           // Raw map tiles from the provider: next/image would proxy them through Vercel for nothing.
@@ -250,7 +247,7 @@ function StaticMap({
           <img
             key={`${t.z}/${t.x}/${t.y}`}
             alt=""
-            src={tileUrl(t, { style, retina, key: TILE_KEY })}
+            src={tileUrl(t, { template, retina })}
             style={{ left: t.left, top: t.top }}
             onError={() => setTilesFailed(true)}
           />
@@ -299,8 +296,8 @@ function StaticMap({
           )}
         </svg>
       )}
-      {showTiles && (
-        <span className="rs-map-attribution">© OpenStreetMap © CARTO</span>
+      {showTiles && TILES && (
+        <span className="rs-map-attribution">{TILES.attribution}</span>
       )}
       {tilesFailed && (
         <span className="rs-map-attribution">Map tiles unavailable</span>
