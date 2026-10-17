@@ -69,13 +69,14 @@ export default function WorkoutsWidget() {
         </span>
       </header>
 
-      <section className="rs-card grid grid-cols-3 gap-4 p-4">
+      {/* Flat, per the Figma redesign: the host draws the one card; stats and rows sit straight on it. */}
+      <section className="flex gap-6">
         <Stat label="Run" value={`${totals.runKm} km`} />
         <Stat label="Ride" value={`${totals.rideKm} km`} />
         <Stat label="Time" value={formatDuration(totals.movingSec)} />
       </section>
 
-      <ul className="rs-card flex flex-col">
+      <ul className="flex flex-col">
         {workouts.map((w, i) => (
           <li key={w.id} className={i > 0 ? "rs-divider" : ""}>
             {host.canMessage ? (
@@ -86,9 +87,6 @@ export default function WorkoutsWidget() {
                 aria-label={`Open ${w.name}, ${w.day} ${w.date}`}
               >
                 <Row w={w} />
-                <span className="rs-caption" aria-hidden="true">
-                  ›
-                </span>
               </button>
             ) : (
               <div className="rs-row">
@@ -108,16 +106,16 @@ export default function WorkoutsWidget() {
 function Row({ w }: { w: WorkoutRow }) {
   return (
     <>
-      <div className="w-10 shrink-0 text-center">
+      <div className="rs-date">
         <div className="rs-caption">{w.day}</div>
-        <div className="rs-emphasis leading-tight">{w.date.split(" ")[0]}</div>
+        <div className="rs-emphasis leading-[18px]">{w.date.split(" ")[0]}</div>
       </div>
       <div className="min-w-0 flex-1 text-left">
         <div className="flex items-center gap-2">
+          <span className="truncate">{w.name}</span>
           <span className="rs-pill" data-sport={w.sport}>
             {LABEL[w.sport]}
           </span>
-          <span className="truncate">{w.name}</span>
         </div>
         <div className="rs-small rs-caption-color truncate">{w.meta}</div>
       </div>
@@ -127,7 +125,7 @@ function Row({ w }: { w: WorkoutRow }) {
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div>
+    <div className="min-w-0 last:flex-1">
       <div className="rs-caption">{label}</div>
       <div className="rs-emphasis">{value}</div>
     </div>
@@ -139,7 +137,7 @@ function Skeleton({ style }: { style: React.CSSProperties }) {
   return (
     <main className="flex flex-col gap-3" style={style} aria-busy="true">
       <div className="rs-skeleton h-5 w-28" />
-      <section className="rs-card grid grid-cols-3 gap-4 p-4">
+      <section className="flex gap-6">
         {[0, 1, 2].map((i) => (
           <div key={i} className="flex flex-col gap-2">
             <div className="rs-skeleton h-3 w-10" />
@@ -147,11 +145,11 @@ function Skeleton({ style }: { style: React.CSSProperties }) {
           </div>
         ))}
       </section>
-      <ul className="rs-card flex flex-col px-4">
+      <ul className="flex flex-col">
         {[0, 1, 2].map((i) => (
           <li key={i} className={i > 0 ? "rs-divider" : ""}>
             <div className="rs-row">
-              <div className="rs-skeleton h-8 w-10" />
+              <div className="rs-skeleton h-[52px] w-[52px]" />
               <div className="flex flex-1 flex-col gap-2">
                 <div className="rs-skeleton h-3 w-40" />
                 <div className="rs-skeleton h-3 w-56" />
