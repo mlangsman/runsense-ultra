@@ -15,6 +15,10 @@ import {
   IntervalsIcuError,
   intervalsIcuClientFromEnv,
 } from "@/src/sources/intervals-icu/client";
+import {
+  SNAPSHOT_ORIGIN,
+  snapshotSignerFromEnv,
+} from "@/src/sources/apple-maps/snapshot";
 
 /**
  * Each widget lives at ONE stable address. Claude caches a connector's tool
@@ -29,8 +33,8 @@ const LEGACY_RESOURCE_URIS = [1, 2, 3, 4].map(
   (n) => `ui://runsense/workouts.html?v=2026-10-16-${n}`,
 );
 
-/** Map tiles. Images only, so they go in resourceDomains, not connectDomains. */
-const TILE_DOMAIN = "https://basemaps.cartocdn.com";
+/** Map images: Apple snapshots, and CARTO tiles as the fallback. Images only, so they go in resourceDomains, not connectDomains. */
+const MAP_DOMAINS = [SNAPSHOT_ORIGIN, "https://basemaps.cartocdn.com"];
 
 async function fetchPageHtml(path: string): Promise<string> {
   const res = await fetch(`${baseURL}${path}`, { cache: "no-store" });
@@ -45,7 +49,7 @@ const widgetMeta = (prefersBorder: boolean) => ({
     csp: {
       connectDomains: [baseURL],
       // assets.claude.ai serves Anthropic Sans for applyHostFonts.
-      resourceDomains: [baseURL, "https://assets.claude.ai", TILE_DOMAIN],
+      resourceDomains: [baseURL, "https://assets.claude.ai", ...MAP_DOMAINS],
     },
   },
 });
@@ -146,7 +150,11 @@ const handler = createMcpHandler(async (server) => {
     async ({ id }) => {
       const client = intervalsIcuClientFromEnv();
       try {
-        const detail = await getWorkoutDetail({ client, id });
+        const detail = await getWorkoutDetail({
+          client,
+          id,
+          signMap: snapshotSignerFromEnv(),
+        });
         return {
           content: [
             { type: "text" as const, text: describeWorkoutDetail(detail) },

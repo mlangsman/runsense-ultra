@@ -44,6 +44,29 @@ describe("getWorkoutDetail", () => {
     expect(track[0][1]).toBeCloseTo(-0.4977, 4);
   });
 
+  it("has no map image unless a signer is given", async () => {
+    const detail = await getWorkoutDetail({
+      client: fullClient(),
+      id: "i1001",
+    });
+    expect(detail.map).toBeNull();
+  });
+
+  it("signs one snapshot per colour scheme when Apple Maps is configured", async () => {
+    const signMap = vi.fn(
+      (query: string) => `https://maps.test/?${query}&signature=x`,
+    );
+    const detail = await getWorkoutDetail({
+      client: fullClient(),
+      id: "i1001",
+      signMap,
+    });
+    expect(signMap).toHaveBeenCalledTimes(2);
+    expect(detail.map!.light).toContain("colorScheme=light");
+    expect(detail.map!.dark).toContain("colorScheme=dark");
+    expect(detail.map!.light).toMatch(/&signature=x$/);
+  });
+
   it("copes with a workout that has no streams or intervals", async () => {
     const client = {
       ...fullClient(),
@@ -56,6 +79,7 @@ describe("getWorkoutDetail", () => {
     };
     const detail = await getWorkoutDetail({ client, id: "i1001" });
     expect(detail.polyline).toBeNull();
+    expect(detail.map).toBeNull();
     expect(detail.splits).toEqual([]);
     expect(detail.laps).toEqual([]);
   });

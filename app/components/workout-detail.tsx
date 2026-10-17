@@ -15,12 +15,15 @@ import type { WorkoutRow } from "@/src/domain/summary";
 import type { Split } from "@/src/domain/splits";
 import { decodePolyline } from "@/src/domain/route";
 import { layoutStaticMap, tileUrl } from "@/src/domain/map";
+import type { MapImages } from "@/src/services/workoutDetail";
 
 /** The structured content of a `get_workout` result. */
 export interface WorkoutDetailResult {
   workout: Workout;
   heading: WorkoutRow & { startTime: string };
   polyline: string | null;
+  /** Signed Apple Maps images of the route per colour scheme; null when not configured. */
+  map?: MapImages | null;
   splits: Split[];
   laps: Lap[];
 }
@@ -60,7 +63,7 @@ export function WorkoutDetail({
   onBack?: () => void;
 }) {
   const fullscreen = host.displayMode === "fullscreen";
-  const { workout: w, heading, polyline, splits, laps } = result;
+  const { workout: w, heading, polyline, map, splits, laps } = result;
   const canGoFullscreen =
     host.availableDisplayModes == null ||
     host.availableDisplayModes.includes("fullscreen");
@@ -94,6 +97,7 @@ export function WorkoutDetail({
       {polyline && (
         <StaticMap
           polyline={polyline}
+          images={map ?? null}
           height={fullscreen ? 360 : 200}
           theme={host.theme}
         />
@@ -184,25 +188,30 @@ function Stat({ label, value }: { label: string; value: string }) {
 }
 
 /**
- * Tiles behind an SVG route. The tile grid and the route's pixel path come
- * from the domain maths; this component only measures the frame and places
+ * The route map. First choice is Apple's snapshot image for the theme, drawn
+ * by Apple with the route on it. Without one, or if it fails to load, tiles
+ * sit behind an SVG route: the tile grid and the route's pixel path come from
+ * the domain maths and this component only measures the frame and places
  * images. If there is no tile key, or a tile fails to load (for instance,
- * blocked by the host's content policy), the tiles are dropped and the route
- * stays on a plain card, so the widget degrades to a vector map rather than
- * breaking.
+ * blocked by the host's content policy), the tiles are dropped too and the
+ * route stays on a plain card, so the widget degrades step by step rather
+ * than breaking.
  */
 function StaticMap({
   polyline,
+  images,
   height,
   theme,
 }: {
   polyline: string;
+  images: MapImages | null;
   height: number;
   /** The host's theme; null when it sends none (iPhone), so the tiles follow the OS like the rest of the widget. */
   theme: "light" | "dark" | null;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(0);
+  const [snapshotFailed, setSnapshotFailed] = useState(false);
   const [tilesFailed, setTilesFailed] = useState(false);
   const [retina, setRetina] = useState(false);
   const [osDark, setOsDark] = useState(false);
@@ -231,9 +240,33 @@ function StaticMap({
     width > 0 ? layoutStaticMap({ track, width, height, padding: 24 }) : null;
   // Voyager is CARTO's coloured style, close to the maps in Anthropic's kit; it has no dark variant, so dark mode keeps Dark Matter under a coloured route.
   const style = dark ? "dark_all" : "rastertiles/voyager";
-  const showTiles = TILE_KEY !== "" && !tilesFailed;
+  const snapshot =
+    images && !snapshotFailed ? images[dark ? "dark" : "light"] : null;
+  const showTiles = !snapshot && TILE_KEY !== "" && !tilesFailed;
   const start = layout?.path[0];
   const end = layout?.path[layout.path.length - 1];
+
+  if (snapshot) {
+    // The image is 2:1; a frame wider than that crops top and bottom, narrower crops the sides. The snapshot's margin around the route absorbs it.
+    const snapshotHeight = Math.min(height, width > 0 ? width / 2 : height);
+    return (
+      <div
+        ref={ref}
+        className="rs-card rs-map"
+        style={{ height: snapshotHeight }}
+        aria-label="Route map"
+      >
+        {/* A signed image from Apple: next/image would proxy it through Vercel for nothing. */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          className="rs-snapshot"
+          alt="Route map"
+          src={snapshot}
+          onError={() => setSnapshotFailed(true)}
+        />
+      </div>
+    );
+  }
 
   return (
     <div
@@ -249,6 +282,7 @@ function StaticMap({
           // eslint-disable-next-line @next/next/no-img-element
           <img
             key={`${t.z}/${t.x}/${t.y}`}
+            className="rs-tile"
             alt=""
             src={tileUrl(t, { style, retina, key: TILE_KEY })}
             style={{ left: t.left, top: t.top }}

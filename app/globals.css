@@ -274,11 +274,21 @@ button.rs-row:focus-visible {
   overflow: hidden;
   background: var(--rs-bg-tertiary);
 }
-.rs-map img {
+.rs-map .rs-tile {
   position: absolute;
   width: 256px;
   height: 256px;
   max-width: none;
+  pointer-events: none;
+  user-select: none;
+}
+/* Apple's snapshot fills the frame; it is 2:1, so the frame's proportions decide what little is cropped. */
+.rs-map .rs-snapshot {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
   pointer-events: none;
   user-select: none;
 }

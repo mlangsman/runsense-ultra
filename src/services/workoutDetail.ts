@@ -1,6 +1,8 @@
 import type { Lap, Workout } from "@/src/domain/workout";
 import { computeSplits, type Split } from "@/src/domain/splits";
 import { encodePolyline, simplify, type LatLng } from "@/src/domain/route";
+import { snapshotQuery } from "@/src/domain/appleSnapshot";
+import type { SnapshotSigner } from "@/src/sources/apple-maps/snapshot";
 import {
   IntervalsIcuError,
   type StreamType,
@@ -20,10 +22,18 @@ export interface WorkoutDetailSource {
   getIntervals(id: string): Promise<IntervalsIntervalsResponse>;
 }
 
+/** Signed Apple Maps snapshot URLs of the route, one per colour scheme. */
+export interface MapImages {
+  light: string;
+  dark: string;
+}
+
 export interface WorkoutDetail {
   workout: Workout;
   /** The GPS track as an encoded polyline, simplified; null without GPS. */
   polyline: string | null;
+  /** Null without GPS or when Apple Maps is not configured; the widget then draws the route itself. */
+  map: MapImages | null;
   splits: Split[];
   laps: Lap[];
 }
@@ -43,9 +53,12 @@ const START_TOLERANCE_DEG = 0.00005; // about 5 m
 export async function getWorkoutDetail({
   client,
   id,
+  signMap,
 }: {
   client: WorkoutDetailSource;
   id: string;
+  /** Signs snapshot requests; omit when Apple Maps is not configured. */
+  signMap?: SnapshotSigner | null;
 }): Promise<WorkoutDetail> {
   const [activity, rawStreams, rawIntervals] = await Promise.all([
     client.getActivity(id),
@@ -69,9 +82,18 @@ export async function getWorkoutDetail({
   );
   const track = compactTrack(streams.latlng ?? []);
 
+  const hasTrack = track.length > 1;
+
   return {
     workout,
-    polyline: track.length > 1 ? encodePolyline(track) : null,
+    polyline: hasTrack ? encodePolyline(track) : null,
+    map:
+      hasTrack && signMap
+        ? {
+            light: signMap(snapshotQuery({ track, colorScheme: "light" })),
+            dark: signMap(snapshotQuery({ track, colorScheme: "dark" })),
+          }
+        : null,
     splits,
     laps,
   };
