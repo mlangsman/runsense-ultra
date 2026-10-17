@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useMcpApp } from "@/app/hooks/use-mcp-app";
+import { framePadding, useMcpApp } from "@/app/hooks/use-mcp-app";
 import {
   formatDistanceKm,
   formatDuration,
@@ -42,12 +42,7 @@ const LABEL: Record<Workout["sport"], string> = {
 export default function WorkoutWidget() {
   const { app, toolResult, host } = useMcpApp();
   const result = toolResult as WorkoutDetailResult | null;
-  const frame = {
-    paddingTop: host.safeArea.top,
-    paddingRight: host.safeArea.right,
-    paddingBottom: host.safeArea.bottom,
-    paddingLeft: host.safeArea.left,
-  };
+  const frame = framePadding(host);
   const fullscreen = host.displayMode === "fullscreen";
 
   if (!result?.workout) return <Skeleton style={frame} />;

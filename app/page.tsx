@@ -1,6 +1,6 @@
 "use client";
 
-import { useMcpApp } from "@/app/hooks/use-mcp-app";
+import { framePadding, useMcpApp } from "@/app/hooks/use-mcp-app";
 import { openWorkoutMessage } from "@/src/domain/describe";
 import { formatDuration } from "@/src/domain/workout";
 import type { WorkoutRow } from "@/src/domain/summary";
@@ -24,13 +24,8 @@ const LABEL: Record<WorkoutRow["sport"], string> = {
 export default function WorkoutsWidget() {
   const { app, toolResult, host } = useMcpApp();
   const result = toolResult as RecentWorkoutsResult | null;
-  // The host asks us to keep these edges clear (16px each side on iPhone).
-  const frame = {
-    paddingTop: host.safeArea.top,
-    paddingRight: host.safeArea.right,
-    paddingBottom: host.safeArea.bottom,
-    paddingLeft: host.safeArea.left,
-  };
+  // 16px inset, or the host's safe-area inset where that is larger.
+  const frame = framePadding(host);
 
   if (!result?.workouts) {
     return <Skeleton style={frame} />;
