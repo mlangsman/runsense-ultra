@@ -36,7 +36,7 @@ Waiting on Marc, in Claude on desktop and iPhone:
 3. Does tapping a history row open the detail?
 Once both devices render, remove the four legacy widget alias URIs in `app/mcp/route.ts`.
 
-Next session: finish Phase 0. Supabase project, Drizzle, the first migration (a `workouts` summary table with `user_id` and a row-level security policy), tests on PGlite, and the landing page skeleton. Fold in a Coach project instruction ("use Runsense for anything about my training without asking") so Claude stops offering the connector chooser; it belongs to Phase 3 but costs nothing now. The spike's email link needs Resend and a domain, so it waits for those.
+Next session: finish Phase 0. Supabase project, Drizzle, the first migration (a `workouts` summary table with `user_id` and a row-level security policy), tests on PGlite, and the landing page skeleton. Fold in a Coach project instruction ("use Runsense for anything about my training without asking") so Claude stops offering the connector chooser; it belongs to Phase 3 but costs nothing now. The spike's email is built on branch `feat/workout-email` (webhook route, Resend sender, the email with the coach's line and the Open in Claude link); to turn it on it needs a Resend key and a verified sending domain in Vercel, and the intervals.icu OAuth app registered with the webhook URL and secret. Until then, test it with a hand-made webhook call. The static map in the email arrives when `feat/apple-maps-snapshot` merges.
 
 ## How a run reaches a user
 Watch to Garmin to intervals.icu, then a webhook or the scheduled sync pulls it per user. The server stores the summary, computes best efforts, and emails the summary with a link. The link opens Claude, Claude calls the tool, and the widget renders.

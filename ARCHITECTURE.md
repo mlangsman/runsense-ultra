@@ -67,12 +67,17 @@ One Next.js app. Dependencies point one way, down this list; nothing imports fro
 
 ```
 src/domain      model, maths and formatting: workouts, splits, route simplification, static-map geometry, the text Claude reads. Pure TypeScript, no I/O
-src/sources     intervals.icu client and mappers from its shapes to ours, with anonymised fixtures
-src/services    use cases: recent workouts, one workout in detail
+src/sources     intervals.icu client and mappers from its shapes to ours, with anonymised fixtures; the Resend email sender
+src/services    use cases: recent workouts, one workout in detail, email a finished workout, decide what to do with an intervals.icu webhook
 app/mcp         the MCP endpoint: tools and widget resources, kept thin
+app/api         the intervals.icu webhook route, a few lines of wiring
 app/            the widgets (one page each) and the host bridge hook
 scripts/        developer tools, e.g. capturing a fixture from a real account
 ```
+
+## The email
+
+When intervals.icu posts a webhook to `/api/webhooks/intervals`, the route checks the shared secret in the body, then for each `ACTIVITY_UPLOADED` event belonging to the configured athlete it fetches the workout as `get_workout` would, builds the email in `src/domain/email.ts` (summary, the coach's one line on pacing, a static map when one is available, and an "Open in Claude" link that pre-fills the prompt a tapped history row would send) and sends it through Resend. Nothing is stored, so a retried webhook sends again. Opt-in during the single-user phase is the `NOTIFY_EMAIL_TO` setting.
 
 ## Widgets
 
