@@ -10,12 +10,14 @@ flowchart LR
   watch[Watch<br/>Garmin, Coros, Suunto, Polar]
   vendor[Vendor cloud<br/>e.g. Garmin Connect]
   icu[intervals.icu<br/>source of truth]
+  peloton[Peloton<br/>unofficial API]
   claude[Claude<br/>iPhone, web, desktop]
   inbox[Email inbox]
 
   subgraph server [runsense-ultra on Vercel]
     direction TB
     ingest[Ingestion<br/>webhook + 15-min sync]
+    psync[Peloton sync<br/>daily cron, TCX upload]
     mcp[MCP server<br/>tools + widgets]
     mail[Email sender]
     auth[Supabase Auth<br/>OAuth 2.1 for Claude]
@@ -24,6 +26,7 @@ flowchart LR
   db[(Supabase Postgres<br/>workout summaries, computed results,<br/>check-ins, niggles, goals, notes<br/>row-level security)]
 
   runner --> watch --> vendor --> icu
+  peloton -- poll --> psync -- TCX upload --> icu
   icu -- new workout --> ingest
   ingest --> db
   ingest --> mail --> inbox
@@ -66,13 +69,18 @@ sequenceDiagram
 One Next.js app. Dependencies point one way, down this list; nothing imports from `app/`.
 
 ```
-src/domain      model, maths and formatting: workouts, splits, route simplification, static-map geometry, the text Claude reads. Pure TypeScript, no I/O
-src/sources     intervals.icu client and mappers from its shapes to ours, with anonymised fixtures
-src/services    use cases: recent workouts, one workout in detail
+src/domain      model, maths and formatting: workouts, splits, route simplification, static-map geometry, the text Claude reads, the TCX builder. Pure TypeScript, no I/O
+src/sources     intervals.icu and Peloton clients, and mappers from their shapes to ours, with anonymised fixtures
+src/services    use cases: recent workouts, one workout in detail, the Peloton sync
 app/mcp         the MCP endpoint: tools and widget resources, kept thin
+app/api/cron    scheduled routes called by Vercel with the cron secret, kept thin
 app/            the widgets (one page each) and the host bridge hook
 scripts/        developer tools, e.g. capturing a fixture from a real account
 ```
+
+## Peloton rides
+
+Peloton pushes rides only to Strava, Garmin, Apple Health, Fitbit and WHOOP, and none of those reaches the intervals.icu API in a usable form. So a daily cron route logs in to Peloton's unofficial API with the account credentials from Vercel's settings, lists the last week's rides, skips any whose external id intervals.icu already holds, builds a TCX file with power, cadence, heart rate and speed for each new one, and uploads it. intervals.icu then holds the ride like any other, and the MCP tools need no change.
 
 ## Widgets
 

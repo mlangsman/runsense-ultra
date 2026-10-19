@@ -1,0 +1,56 @@
+{
+  "duration": 1800,
+  "seconds_since_pedaling_start": [0, 1, 2, 3, 4],
+  "metrics": [
+    {
+      "display_name": "Output",
+      "slug": "output",
+      "display_unit": "watts",
+      "values": [0, 150, 180, 200, 190]
+    },
+    {
+      "display_name": "Cadence",
+      "slug": "cadence",
+      "display_unit": "rpm",
+      "values": [0, 80, 85, 90, 88]
+    },
+    {
+      "display_name": "Resistance",
+      "slug": "resistance",
+      "display_unit": "%",
+      "values": [0, 40, 42, 45, 45]
+    },
+    {
+      "display_name": "Speed",
+      "slug": "speed",
+      "display_unit": "mph",
+      "values": [0, 15.0, 17.0, 18.0, 18.0]
+    },
+    {
+      "display_name": "Heart Rate",
+      "slug": "heart_rate",
+      "display_unit": "bpm",
+      "values": [95, 110, 125, 131, 135]
+    }
+  ],
+  "summaries": [
+    {
+      "display_name": "Total Output",
+      "slug": "total_output",
+      "value": 312,
+      "display_unit": "kj"
+    },
+    {
+      "display_name": "Distance",
+      "slug": "distance",
+      "display_unit": "mi",
+      "value": 8.82
+    },
+    {
+      "display_name": "Calories",
+      "slug": "calories",
+      "display_unit": "kcal",
+      "value": 410
+    }
+  ]
+}
