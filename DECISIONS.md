@@ -59,6 +59,7 @@ One line per decision, oldest first. Kept concise for the engineering write-up. 
 | 18 Oct 2026 | The coach's line in the email is one deterministic sentence about pacing from the splits (negative split, fade, or even), and a neutral line otherwise | Honest from the numbers, never medical, and testable; goals and history reshape it in Phase 3 | A model-written line (no eval harness yet); no line |
 | 18 Oct 2026 | Opt-in for the single-user phase is the `NOTIFY_EMAIL_TO` setting; unset means the webhook is acknowledged and nothing is sent | Per-user opt-in and unsubscribe need accounts, which arrive in Phase 1; the setting is the one switch that exists now | Building unsubscribe before there are users |
 | 18 Oct 2026 | The email takes an optional static map image URL and the notify service an optional `mapImage` resolver, both null today | The Apple Maps snapshot work is in flight on `feat/apple-maps-snapshot`; when it merges, the route passes the signed light-mode snapshot URL in one line and the email gains its map without touching the domain | Waiting for the maps branch; drawing the tile grid again for email |
+| 19 Oct 2026 | A plain privacy page at `/privacy` now, written for the single-user phase, rather than waiting for Phase 5 | intervals.icu's app form will not submit without a privacy policy URL, and the app is what delivers webhooks. The page says what is read, that nothing is kept yet, where data goes and how to stop it; it is revised when accounts arrive | A placeholder URL; registering without webhooks |
 
 ## Still open
 
