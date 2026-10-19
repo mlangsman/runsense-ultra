@@ -69,11 +69,12 @@ sequenceDiagram
 One Next.js app. Dependencies point one way, down this list; nothing imports from `app/`.
 
 ```
-src/domain      model, maths and formatting: workouts, splits, route simplification, static-map geometry, the text Claude reads, the TCX builder. Pure TypeScript, no I/O
-src/sources     intervals.icu and Peloton clients, and mappers from their shapes to ours, with anonymised fixtures
-src/services    use cases: recent workouts, one workout in detail, the Peloton sync
+src/domain      model, maths and formatting: workouts, splits, route simplification, static-map geometry, the text Claude reads, the TCX builder, the email. Pure TypeScript, no I/O
+src/sources     intervals.icu and Peloton clients, and mappers from their shapes to ours, with anonymised fixtures; the Resend email sender
+src/services    use cases: recent workouts, one workout in detail, the Peloton sync, email a finished workout, decide what to do with an intervals.icu webhook
 app/mcp         the MCP endpoint: tools and widget resources, kept thin
 app/api/cron    scheduled routes called by Vercel with the cron secret, kept thin
+app/api/webhooks the intervals.icu webhook route, a few lines of wiring
 app/            the widgets (one page each) and the host bridge hook
 scripts/        developer tools, e.g. capturing a fixture from a real account
 ```
@@ -81,6 +82,10 @@ scripts/        developer tools, e.g. capturing a fixture from a real account
 ## Peloton rides
 
 Peloton pushes rides only to Strava, Garmin, Apple Health, Fitbit and WHOOP, and none of those reaches the intervals.icu API in a usable form. So a daily cron route logs in to Peloton's unofficial API with the account credentials from Vercel's settings, lists the last week's rides, skips any whose external id intervals.icu already holds, builds a TCX file with power, cadence, heart rate and speed for each new one, and uploads it. intervals.icu then holds the ride like any other, and the MCP tools need no change.
+
+## The email
+
+When intervals.icu posts a webhook to `/api/webhooks/intervals`, the route checks the shared secret the app settings send as the Authorization header, then for each `ACTIVITY_UPLOADED` event belonging to the configured athlete it fetches the workout as `get_workout` would, builds the email in `src/domain/email.ts` (summary, the coach's one line on pacing, a static map when one is available, and an "Open in Claude" link that pre-fills the prompt a tapped history row would send) and sends it through Resend. Nothing is stored, so a retried webhook sends again. Opt-in during the single-user phase is the `NOTIFY_EMAIL_TO` setting.
 
 ## Widgets
 

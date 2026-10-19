@@ -24,3 +24,15 @@ function constantTimeEqual(a: string, b: string): boolean {
   }
   return diff === 0;
 }
+
+/**
+ * Whether a secret presented by a caller (for example in a webhook body)
+ * matches the one we expect. Fails closed when either is missing.
+ */
+export function secretMatches(
+  presented: string | undefined,
+  expected: string | undefined,
+): boolean {
+  if (!presented || !expected) return false;
+  return constantTimeEqual(presented, expected);
+}

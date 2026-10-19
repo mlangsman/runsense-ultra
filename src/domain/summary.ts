@@ -59,7 +59,7 @@ const MONTHS = [
   "Dec",
 ];
 
-function speedKmh(distanceM: number, movingSec: number): string {
+export function speedKmh(distanceM: number, movingSec: number): string {
   return `${round1(distanceM / 1000 / (movingSec / 3600)).toFixed(1)} km/h`;
 }
 
