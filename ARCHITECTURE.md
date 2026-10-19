@@ -77,7 +77,7 @@ scripts/        developer tools, e.g. capturing a fixture from a real account
 
 ## The email
 
-When intervals.icu posts a webhook to `/api/webhooks/intervals`, the route checks the shared secret in the body, then for each `ACTIVITY_UPLOADED` event belonging to the configured athlete it fetches the workout as `get_workout` would, builds the email in `src/domain/email.ts` (summary, the coach's one line on pacing, a static map when one is available, and an "Open in Claude" link that pre-fills the prompt a tapped history row would send) and sends it through Resend. Nothing is stored, so a retried webhook sends again. Opt-in during the single-user phase is the `NOTIFY_EMAIL_TO` setting.
+When intervals.icu posts a webhook to `/api/webhooks/intervals`, the route checks the shared secret the app settings send as the Authorization header, then for each `ACTIVITY_UPLOADED` event belonging to the configured athlete it fetches the workout as `get_workout` would, builds the email in `src/domain/email.ts` (summary, the coach's one line on pacing, a static map when one is available, and an "Open in Claude" link that pre-fills the prompt a tapped history row would send) and sends it through Resend. Nothing is stored, so a retried webhook sends again. Opt-in during the single-user phase is the `NOTIFY_EMAIL_TO` setting.
 
 ## Widgets
 

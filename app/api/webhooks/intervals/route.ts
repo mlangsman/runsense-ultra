@@ -1,7 +1,7 @@
 /**
  * intervals.icu calls this when something happens on the connected account.
- * The body carries the shared secret, so the route is open to the network
- * and the service checks the secret. The decision logic lives in
+ * The call carries the shared secret (the app's webhook authorization
+ * header), so the route is open to the network and the service checks it. The decision logic lives in
  * src/services/intervalsWebhook.ts; this file only wires the environment.
  */
 
@@ -17,6 +17,7 @@ export async function POST(request: Request) {
   try {
     const result = await handleIntervalsWebhook({
       body,
+      authorization: request.headers.get("authorization"),
       secret: process.env.INTERVALS_WEBHOOK_SECRET,
       athleteId: process.env.INTERVALS_ICU_ATHLETE_ID,
       notify: to

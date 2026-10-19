@@ -1,9 +1,11 @@
 /**
- * What to do with a webhook call from intervals.icu. The body carries the
- * shared secret and a batch of events; each event names the athlete, its
- * type and the activity. We email the user about each newly uploaded
- * activity of theirs and ignore everything else. Pure decision-making over
- * injected dependencies, so the route stays a few lines.
+ * What to do with a webhook call from intervals.icu. The app settings page
+ * sets a "Webhook Authorization Header" that intervals.icu sends on every
+ * call; older write-ups show the same secret as a `secret` field in the
+ * body, so either is accepted. The body is a batch of events; each names
+ * the athlete, its type and the activity. We email the user about each
+ * newly uploaded activity of theirs and ignore everything else. Pure
+ * decision-making over injected dependencies, so the route stays small.
  */
 
 import { z } from "zod";
@@ -15,7 +17,7 @@ export const NOTIFY_ON_EVENTS = ["ACTIVITY_UPLOADED"] as const;
 const idSchema = z.union([z.string(), z.number()]).transform(String);
 
 export const webhookPayloadSchema = z.object({
-  secret: z.string().min(1),
+  secret: z.string().optional(),
   events: z.array(
     z.object({
       athlete_id: idSchema,
@@ -39,6 +41,8 @@ export interface WebhookResult {
 export interface HandleWebhookOptions {
   /** The parsed JSON body, whatever it turned out to be. */
   body: unknown;
+  /** The request's Authorization header, as intervals.icu sends the secret. */
+  authorization: string | null;
   /** The secret intervals.icu was configured with; unset means reject everything. */
   secret: string | undefined;
   /** The one athlete we act for during the single-user phase. */
@@ -49,6 +53,7 @@ export interface HandleWebhookOptions {
 
 export async function handleIntervalsWebhook({
   body,
+  authorization,
   secret,
   athleteId,
   notify,
@@ -60,7 +65,8 @@ export async function handleIntervalsWebhook({
       body: { notified: [], ignored: 0, error: "malformed payload" },
     };
   }
-  if (!secretMatches(parsed.data.secret, secret)) {
+  const presented = authorization ?? parsed.data.secret;
+  if (!secretMatches(presented, secret)) {
     return {
       status: 401,
       body: { notified: [], ignored: 0, error: "bad secret" },

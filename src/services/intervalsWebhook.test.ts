@@ -13,6 +13,7 @@ const handle = (
 ) =>
   handleIntervalsWebhook({
     body,
+    authorization: null,
     secret: "whsec",
     athleteId: "i42",
     notify: vi.fn<(id: string) => Promise<void>>(async () => {}),
@@ -64,6 +65,19 @@ describe("handleIntervalsWebhook", () => {
     expect(result.body.notified).toEqual(["7"]);
   });
 
+  it("takes the secret from the Authorization header, as the app settings send it", async () => {
+    const ok = await handle(
+      { events: [uploaded("a1")] },
+      { authorization: "whsec" },
+    );
+    expect(ok.status).toBe(200);
+    const wrong = await handle(
+      { secret: "whsec", events: [uploaded("a1")] },
+      { authorization: "nope" },
+    );
+    expect(wrong.status).toBe(401);
+  });
+
   it("rejects a wrong or missing secret and never notifies", async () => {
     const notify = vi.fn<(id: string) => Promise<void>>(async () => {});
     const wrong = await handle(
@@ -81,7 +95,7 @@ describe("handleIntervalsWebhook", () => {
 
   it("rejects a malformed body before looking at the secret", async () => {
     expect((await handle(null)).status).toBe(400);
-    expect((await handle({ events: [] })).status).toBe(400);
+    expect((await handle({ events: [] })).status).toBe(401);
     expect(
       (await handle({ secret: "whsec", events: [{ type: 1 }] })).status,
     ).toBe(400);
