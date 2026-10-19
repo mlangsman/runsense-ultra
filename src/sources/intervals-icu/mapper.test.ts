@@ -3,6 +3,7 @@ import fixture from "./__fixtures__/activities.json";
 import streamsFixture from "./__fixtures__/streams.json";
 import intervalsFixture from "./__fixtures__/intervals.json";
 import {
+  isStub,
   toLap,
   toStreams,
   toWorkout,
@@ -133,5 +134,19 @@ describe("toLap", () => {
     expect(lap.kind).toBe("recovery");
     expect(lap.name).toBe("Jog");
     expect(lap.index).toBe(2);
+  });
+});
+
+describe("isStub", () => {
+  it("spots the empty stub intervals.icu returns for a Strava activity", () => {
+    expect(
+      isStub({
+        id: "20638458517",
+        start_date_local: "2026-10-18T17:58:51",
+        source: "STRAVA",
+      }),
+    ).toBe(true);
+    expect(isStub({ id: "x", type: "Ride" })).toBe(true);
+    expect(isStub(byId("i1001"))).toBe(false);
   });
 });

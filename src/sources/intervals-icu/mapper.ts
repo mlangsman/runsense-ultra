@@ -17,6 +17,22 @@ export interface IntervalsActivity {
   max_heartrate?: number | null;
   icu_training_load?: number | null;
   average_cadence?: number | null;
+  source?: string | null;
+  /** The activity's id on the system it came from, set on uploads. */
+  external_id?: string | null;
+}
+
+/**
+ * intervals.icu answers with an empty stub, carrying only an id, a date and
+ * `source: "STRAVA"`, for activities that came in through Strava: Strava's
+ * terms keep them out of the API. A stub has nothing to show.
+ */
+export function isStub(a: Partial<IntervalsActivity>): boolean {
+  return (
+    a.source === "STRAVA" ||
+    typeof a.type !== "string" ||
+    typeof a.moving_time !== "number"
+  );
 }
 
 const SPORTS: Record<string, Sport> = {

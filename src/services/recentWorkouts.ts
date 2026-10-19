@@ -1,6 +1,7 @@
 import type { Workout } from "@/src/domain/workout";
 import type { DateRange } from "@/src/sources/intervals-icu/client";
 import {
+  isStub,
   toWorkout,
   type IntervalsActivity,
 } from "@/src/sources/intervals-icu/mapper";
@@ -32,6 +33,7 @@ export async function getRecentWorkouts({
   const oldest = isoDate(new Date(now.getTime() - (days - 1) * 86_400_000));
   const raw = await client.listActivities({ oldest, newest });
   const workouts = raw
+    .filter((a) => !isStub(a))
     .map(toWorkout)
     .filter((w) => {
       const day = w.startLocal.slice(0, 10);
