@@ -30,3 +30,20 @@ jobs:
         uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  semgrep:
+    runs-on: ubuntu-latest
+    container:
+      image: semgrep/semgrep
+    steps:
+      - uses: actions/checkout@v4
+      # Named rulesets rather than "auto", which needs a Semgrep account and
+      # sends metrics. Fails the job on any finding.
+      - run: >-
+          semgrep scan --error --metrics=off
+          --config p/default
+          --config p/typescript
+          --config p/react
+          --config p/nodejs
+          --config p/owasp-top-ten
+          --config p/secrets
