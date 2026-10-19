@@ -40,6 +40,22 @@ describe("notifyWorkout", () => {
     expect(message.html).not.toContain("<img");
   });
 
+  it("routes the button through our open page when given the base url", async () => {
+    const sender = {
+      send: vi.fn<(m: EmailMessage) => Promise<void>>(async () => {}),
+    };
+    await notifyWorkout({
+      client: client(),
+      id: "i1001",
+      sender,
+      to: "runner@example.com",
+      baseUrl: "https://runsense.example",
+    });
+    const html = sender.send.mock.calls[0][0].html;
+    expect(html).toContain('href="https://runsense.example/open?q=Show%20me');
+    expect(html).not.toContain("claude.ai/new");
+  });
+
   it("puts a map in when a map image is available", async () => {
     const sender = {
       send: vi.fn<(m: EmailMessage) => Promise<void>>(async () => {}),

@@ -6,7 +6,8 @@
 
 import { coachLine } from "./coachLine";
 import type { WorkoutDetailLike } from "./describe";
-import { formatStartTime, openWorkoutMessage } from "./describe";
+import { formatStartTime } from "./describe";
+import { claudeWebUrl, workoutPrompt } from "./openLinks";
 import { toWorkoutRow, speedKmh } from "./summary";
 import {
   formatDistanceKm,
@@ -27,6 +28,8 @@ export interface WorkoutEmailInput {
   detail: WorkoutDetailLike;
   /** A static image of the route, or null to leave the map out. */
   mapImageUrl: string | null;
+  /** Where the button goes; defaults to the claude.ai link. */
+  openUrl?: string;
 }
 
 export interface Stat {
@@ -46,14 +49,9 @@ const SPORT_LABEL: Record<Workout["sport"], string> = {
   other: "Workout",
 };
 
-/**
- * The link that opens Claude with the prompt pre-filled. Claude's `new`
- * page takes the prompt as `q`; the user sends it and the detail widget
- * renders. Documented for desktop and web; iPhone is still to be checked.
- */
+/** The claude.ai link with the prompt pre-filled; see openLinks.ts for the rest. */
 export function openInClaudeUrl(workout: Workout): string {
-  const prompt = openWorkoutMessage(toWorkoutRow(workout));
-  return `https://claude.ai/new?q=${encodeURIComponent(prompt)}`;
+  return claudeWebUrl(workoutPrompt(workout));
 }
 
 export function workoutStats(w: Workout): Stat[] {
@@ -93,13 +91,13 @@ export function workoutStats(w: Workout): Stat[] {
 export function buildWorkoutEmail({
   detail,
   mapImageUrl,
+  openUrl = openInClaudeUrl(detail.workout),
 }: WorkoutEmailInput): Email {
   const { workout } = detail;
   const row = toWorkoutRow(workout);
   const when = `${row.day} ${row.date} · ${formatStartTime(workout.startLocal)} · ${SPORT_LABEL[workout.sport]}`;
   const stats = workoutStats(workout);
   const coach = coachLine(detail);
-  const openUrl = openInClaudeUrl(workout);
   const subject = `${workout.name}: ${row.meta}`;
 
   const text = [

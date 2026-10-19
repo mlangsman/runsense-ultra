@@ -79,6 +79,17 @@ describe("buildWorkoutEmail", () => {
     expect(email.html).not.toContain("<img");
   });
 
+  it("sends the button wherever it is told", () => {
+    const email = buildWorkoutEmail({
+      detail,
+      mapImageUrl: null,
+      openUrl: "https://runsense.example/open?q=hi",
+    });
+    expect(email.html).toContain('href="https://runsense.example/open?q=hi"');
+    expect(email.text).toContain("https://runsense.example/open?q=hi");
+    expect(email.html).not.toContain("claude.ai/new");
+  });
+
   it("includes the map image when given one", () => {
     const email = buildWorkoutEmail({
       detail,
