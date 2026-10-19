@@ -12,10 +12,10 @@ jobs:
   checks:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 22
           cache: npm
@@ -27,6 +27,23 @@ jobs:
       - run: npm audit --audit-level=high --omit=dev
       - run: npm audit --audit-level=high || true
       - name: Secret scan
-        uses: gitleaks/gitleaks-action@v2
+        uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2.3.9
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  semgrep:
+    runs-on: ubuntu-latest
+    container:
+      image: semgrep/semgrep
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      # Named rulesets rather than "auto", which needs a Semgrep account and
+      # sends metrics. Fails the job on any finding.
+      - run: >-
+          semgrep scan --error --metrics=off
+          --config p/default
+          --config p/typescript
+          --config p/react
+          --config p/nodejs
+          --config p/owasp-top-ten
+          --config p/secrets
