@@ -64,7 +64,7 @@ export default function PrivacyPage() {
         server&apos;s settings.
       </Section>
 
-      <Section title="Contact">Questions go to marc@langsman.com.</Section>
+      <Section title="Contact">Questions go to runsense@langsman.com.</Section>
     </main>
   );
 }
