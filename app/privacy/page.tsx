@@ -31,9 +31,9 @@ export default function PrivacyPage() {
       </p>
 
       <p>
-        Runsense is a running coach that runs inside Claude. It is a personal
-        project by Marc Langsman and is used by its author only at this stage.
-        This page says what it reads, what it keeps and how to stop it.
+        Runsense is a personal running-coach project, used by its author only at
+        this stage. This page says what it reads, what it keeps and how to stop
+        it.
       </p>
 
       <Section title="What it reads">
