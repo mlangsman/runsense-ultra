@@ -44,24 +44,25 @@ export default function PrivacyPage() {
 
       <Section title="What it keeps">
         Nothing yet. Each request fetches the workout from intervals.icu, shows
-        it in Claude or sends it by email, and discards it. Secrets for
-        intervals.icu and the email service live only in the hosting
+        it in your AI assistant or sends it by email, and discards it. Secrets
+        for intervals.icu and the email service live only in the hosting
         provider&apos;s settings, never in the code.
       </Section>
 
       <Section title="Where it goes">
-        Workout data is shown to you inside Claude, which is run by Anthropic
-        under its own privacy policy. When a workout syncs, Runsense can email
-        you a summary through Resend, the email service. Map images, when shown,
-        are drawn from a map provider using the route&apos;s coordinates. No
-        data is sold or shared with anyone else.
+        Workout data is shown to you inside the AI assistant you connect
+        Runsense to, such as Claude or ChatGPT, which runs under its own privacy
+        policy. When a workout syncs, Runsense can email you a summary through
+        Resend, the email service. Map images, when shown, are drawn from a map
+        provider using the route&apos;s coordinates. No data is sold or shared
+        with anyone else.
       </Section>
 
       <Section title="How to stop it">
         Disconnect Runsense from the Apps section of your intervals.icu
-        settings, or remove the Runsense connector in Claude. Either ends all
-        access. Emails stop when the notification address is removed from the
-        server&apos;s settings.
+        settings, or remove the Runsense connector from your AI assistant.
+        Either ends all access. Emails stop when the notification address is
+        removed from the server&apos;s settings.
       </Section>
 
       <Section title="Contact">Questions go to runsense@langsman.com.</Section>
