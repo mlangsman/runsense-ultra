@@ -27,7 +27,7 @@ TypeScript everywhere, npm, one Next.js app on Vercel. `src/domain` holds the mo
 - Secrets only in environment settings (Vercel, Supabase, the cloud session). Never in this repo, never in logs. `.env.example` lists names only.
 - Every table has a `user_id` and an RLS policy from its first migration. Per-user tokens encrypted at rest.
 - Validate all inputs with zod. Bearer or OAuth on every route except health and webhooks; webhooks verify a secret.
-- OWASP ASVS for the server. CI runs lint, typecheck, tests, `npm audit`, gitleaks and Semgrep.
+- OWASP ASVS for the server. CI runs lint, typecheck, tests, `npm audit`, gitleaks, Semgrep and CodeQL; Dependabot opens weekly update pull requests.
 - The coach never gives medical advice; see the principles in PRODUCT.md.
 
 ## Commands

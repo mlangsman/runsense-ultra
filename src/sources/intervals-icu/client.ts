@@ -29,6 +29,13 @@ export interface DateRange {
   newest: string;
 }
 
+export interface UploadMeta {
+  /** The activity's id on the system it came from; stored by intervals.icu. */
+  externalId: string;
+  name?: string;
+  deviceName?: string;
+}
+
 /** The stream names intervals.icu serves that we know how to read. */
 export type StreamType =
   | "time"
@@ -57,12 +64,48 @@ export function createIntervalsIcuClient(options: IntervalsIcuClientOptions) {
   }
 
   return {
-    listActivities(range: DateRange): Promise<IntervalsActivity[]> {
+    /** Activities in the range, newest first. `fields` narrows the returned objects. */
+    listActivities(
+      range: DateRange,
+      fields?: string[],
+    ): Promise<IntervalsActivity[]> {
       const params = new URLSearchParams({
         oldest: range.oldest,
         newest: range.newest,
       });
+      if (fields?.length) params.set("fields", fields.join(","));
       return get(`/athlete/${options.athleteId}/activities?${params}`);
+    },
+    /**
+     * Upload an activity file. intervals.icu de-dupes on a hash of the file
+     * and answers 201 when something new was created, 200 when not.
+     */
+    async uploadActivity(
+      file: { filename: string; content: string },
+      meta: UploadMeta,
+    ): Promise<{ created: boolean }> {
+      const params = new URLSearchParams({ external_id: meta.externalId });
+      if (meta.name) params.set("name", meta.name);
+      if (meta.deviceName) params.set("device_name", meta.deviceName);
+      const body = new FormData();
+      body.set(
+        "file",
+        new Blob([file.content], { type: "application/xml" }),
+        file.filename,
+      );
+      const path = `/athlete/${options.athleteId}/activities?${params}`;
+      const res = await doFetch(`${BASE_URL}${path}`, {
+        method: "POST",
+        headers: { authorization, accept: "application/json" },
+        body,
+      });
+      if (!res.ok) {
+        throw new IntervalsIcuError(
+          `intervals.icu responded ${res.status} for ${path}`,
+          res.status,
+        );
+      }
+      return { created: res.status === 201 };
     },
     getActivity(id: string): Promise<IntervalsActivity> {
       return get(`/activity/${encodeURIComponent(id)}`);

@@ -1,0 +1,16 @@
+{
+  "id": "wk-fixture",
+  "start_time": 1792346331,
+  "end_time": 1792348131,
+  "fitness_discipline": "cycling",
+  "status": "COMPLETE",
+  "timezone": "Europe/London",
+  "name": "Cycling Workout",
+  "total_work": 312000,
+  "has_pedaling_metrics": true,
+  "ride": {
+    "title": "30 min Power Zone Ride",
+    "duration": 1800,
+    "instructor": { "name": "Fixture Instructor" }
+  }
+}

@@ -28,4 +28,20 @@ describe("getRecentWorkouts", () => {
     const result = await getRecentWorkouts({ client, days: 7, now });
     expect(result.workouts.some((w) => w.id === "i1004")).toBe(false);
   });
+
+  it("drops the stubs intervals.icu returns for Strava activities", async () => {
+    const now = new Date("2026-10-16T12:00:00Z");
+    const stub = {
+      id: "20638458517",
+      start_date_local: "2026-10-15T17:58:51",
+      source: "STRAVA",
+    } as unknown as IntervalsActivity;
+    const withStub = {
+      listActivities: vi.fn(
+        async () => [stub, ...fixture] as unknown as IntervalsActivity[],
+      ),
+    };
+    const result = await getRecentWorkouts({ client: withStub, days: 7, now });
+    expect(result.workouts.map((w) => w.id)).toEqual(["i1001", "i1005"]);
+  });
 });
