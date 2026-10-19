@@ -5,6 +5,7 @@
  * src/services/intervalsWebhook.ts; this file only wires the environment.
  */
 
+import { baseURL } from "@/baseUrl";
 import { handleIntervalsWebhook } from "@/src/services/intervalsWebhook";
 import { notifyWorkout } from "@/src/services/notifyWorkout";
 import { intervalsIcuClientFromEnv } from "@/src/sources/intervals-icu/client";
@@ -27,6 +28,7 @@ export async function POST(request: Request) {
               id,
               sender: resendSenderFromEnv(),
               to,
+              baseUrl: baseURL,
             })
         : null,
     });
