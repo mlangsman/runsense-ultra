@@ -32,4 +32,4 @@ TypeScript everywhere, npm, one Next.js app on Vercel. `src/domain` holds the mo
 
 ## Commands
 
-Filled in at Phase 0: `pnpm typecheck`, `pnpm lint`, `pnpm test`, `pnpm dev`.
+`npm run typecheck`, `npm run lint`, `npm test`, `npm run format:check`, `npm run dev`. Database: `npm run db:generate` after changing `src/db/schema.ts` (commit the SQL it writes), `npm run db:migrate` with `DATABASE_URL` set to apply it to Supabase. Tests run the same migrations on PGlite, so no database is needed to run them.

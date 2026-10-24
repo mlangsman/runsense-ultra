@@ -82,10 +82,16 @@ const readOnly = {
 };
 
 const handler = createMcpHandler(async (server) => {
-  registerWidget(server, "workouts-widget", HISTORY_URI, "/", true);
+  registerWidget(server, "workouts-widget", HISTORY_URI, "/workouts", true);
   registerWidget(server, "workout-widget", DETAIL_URI, "/workout");
   LEGACY_RESOURCE_URIS.forEach((uri, i) =>
-    registerWidget(server, `workouts-widget-legacy-${i + 1}`, uri, "/", true),
+    registerWidget(
+      server,
+      `workouts-widget-legacy-${i + 1}`,
+      uri,
+      "/workouts",
+      true,
+    ),
   );
 
   registerAppTool(
