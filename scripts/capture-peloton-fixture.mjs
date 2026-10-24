@@ -24,23 +24,26 @@ if (!username || !password) {
 const [wantedId] = process.argv.slice(2);
 
 const common = { accept: "application/json", "peloton-platform": "web" };
-const loginRes = await fetch(`${base}/auth/login`, {
+const tokenRes = await fetch("https://auth.onepeloton.com/oauth/token", {
   method: "POST",
   headers: { ...common, "content-type": "application/json" },
   body: JSON.stringify({
-    username_or_email: username,
+    grant_type: "password",
+    client_id: "mgsmWCD0A8Qn6uz6mmqI6qeBNHH9IPwS",
+    scope: "offline_access openid",
+    username,
     password,
-    with_pubsub: false,
   }),
 });
-if (!loginRes.ok) throw new Error(`login failed with ${loginRes.status}`);
-const { session_id, user_id } = await loginRes.json();
-const headers = { ...common, cookie: `peloton_session_id=${session_id}` };
+if (!tokenRes.ok) throw new Error(`login failed with ${tokenRes.status}`);
+const { access_token } = await tokenRes.json();
+const headers = { ...common, authorization: `Bearer ${access_token}` };
 const get = async (path) => {
   const res = await fetch(`${base}${path}`, { headers });
   if (!res.ok) throw new Error(`${res.status} for ${path}`);
   return res.json();
 };
+const { id: user_id } = await get("/api/me");
 
 let workout;
 if (wantedId) {
