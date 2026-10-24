@@ -32,7 +32,7 @@ Later: route generation, deeper analysis, Garmin direct, and a native app only i
 
 Merged to main and deployed: `list_recent_workouts` and `get_workout`, the history and detail widgets, the map drawn from real GPS data, and tap-to-open from a history row. Rendering lessons are in DECISIONS.md.
 
-Built, awaiting its first real run: step 1b, the Peloton sync (`src/sources/peloton`, `src/services/syncPeloton.ts`, `app/api/cron/peloton`), 99 tests. To switch it on: set `PELOTON_USERNAME`, `PELOTON_PASSWORD` (both Sensitive) and `CRON_SECRET` in Vercel, deploy, then call `GET /api/cron/peloton` once with `Authorization: Bearer <CRON_SECRET>` and check the report and intervals.icu. Run `scripts/capture-peloton-fixture.mjs` locally to replace the hand-written fixtures with real shapes. Two things to confirm are listed under "Still open" in DECISIONS.md.
+Step 1b, the Peloton sync, is live: the first production run on 24 Oct uploaded four rides to intervals.icu with power, cadence and heart rate, replacing their Strava stubs, and `list_recent_workouts` shows them. The daily cron takes it from here. Peloton retired its old login during the build, so the client uses the OAuth token endpoint (DECISIONS.md, 24 Oct).
 
 Waiting on Marc, in Claude on desktop and iPhone:
 1. Tiles: desktop shows them, so `resourceDomains` works, but CARTO now needs a key. Set `NEXT_PUBLIC_CARTO_API_KEY` in Vercel (free, carto.com/basemaps/apikey) and redeploy. iPhone still to check.
