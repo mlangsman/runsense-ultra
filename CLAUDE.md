@@ -32,4 +32,4 @@ TypeScript everywhere, npm, one Next.js app on Vercel. `src/domain` holds the mo
 
 ## Commands
 
-`npm run typecheck`, `npm run lint`, `npm test`, `npm run format:check`, `npm run dev`. Database: `npm run db:generate` after changing `src/db/schema.ts` (commit the SQL it writes), `npm run db:migrate` with `DATABASE_URL` set to apply it to Supabase. Tests run the same migrations on PGlite, so no database is needed to run them.
+`npm run typecheck`, `npm run lint`, `npm test`, `npm run format:check`, `npm run dev`. Database: `npm run db:generate` after changing `src/db/schema.ts` (commit the SQL it writes), apply it to Supabase through the Supabase connector's `apply_migration` with the same SQL plus a row in `drizzle.__drizzle_migrations` (hash is the SHA-256 of the file, `created_at` the `when` from the journal), or `npm run db:migrate` where `DATABASE_URL` is set. Tests run the same migrations on PGlite, so no database is needed to run them.
