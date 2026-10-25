@@ -81,104 +81,122 @@ const readOnly = {
   openWorldHint: false,
 };
 
-const handler = createMcpHandler(async (server) => {
-  registerWidget(server, "workouts-widget", HISTORY_URI, "/workouts", true);
-  registerWidget(server, "workout-widget", DETAIL_URI, "/workout");
-  LEGACY_RESOURCE_URIS.forEach((uri, i) =>
-    registerWidget(
+/**
+ * Vercel's default is 300 s. Nothing here should take longer than a tool
+ * call to intervals.icu; a request that runs to the cap is a bug, and a
+ * lower cap keeps a stuck one from eating function hours.
+ */
+export const maxDuration = 60;
+
+const handler = createMcpHandler(
+  async (server) => {
+    registerWidget(server, "workouts-widget", HISTORY_URI, "/workouts", true);
+    registerWidget(server, "workout-widget", DETAIL_URI, "/workout");
+    LEGACY_RESOURCE_URIS.forEach((uri, i) =>
+      registerWidget(
+        server,
+        `workouts-widget-legacy-${i + 1}`,
+        uri,
+        "/workouts",
+        true,
+      ),
+    );
+
+    registerAppTool(
       server,
-      `workouts-widget-legacy-${i + 1}`,
-      uri,
-      "/workouts",
-      true,
-    ),
-  );
-
-  registerAppTool(
-    server,
-    "list_recent_workouts",
-    {
-      title: "Recent workouts",
-      description:
-        "List the athlete's workouts from the last N days (default 7), newest first, with distance, time, pace or speed and heart rate, plus totals. Shows them in a widget. Each row carries the workout id to pass to get_workout.",
-      inputSchema: {
-        days: z
-          .number()
-          .int()
-          .min(1)
-          .max(90)
-          .default(7)
-          .describe("How many days back to include, counting today"),
+      "list_recent_workouts",
+      {
+        title: "Recent workouts",
+        description:
+          "List the athlete's workouts from the last N days (default 7), newest first, with distance, time, pace or speed and heart rate, plus totals. Shows them in a widget. Each row carries the workout id to pass to get_workout.",
+        inputSchema: {
+          days: z
+            .number()
+            .int()
+            .min(1)
+            .max(90)
+            .default(7)
+            .describe("How many days back to include, counting today"),
+        },
+        annotations: readOnly,
+        _meta: { ui: { resourceUri: HISTORY_URI } },
       },
-      annotations: readOnly,
-      _meta: { ui: { resourceUri: HISTORY_URI } },
-    },
-    async ({ days }) => {
-      const client = intervalsIcuClientFromEnv();
-      const { range, workouts } = await getRecentWorkouts({ client, days });
-      const totals = summarise(workouts);
-      const rows = workouts.map(toWorkoutRow);
-      const text =
-        workouts.length === 0
-          ? `No workouts between ${range.oldest} and ${range.newest}.`
-          : [
-              `${totals.count} workouts between ${range.oldest} and ${range.newest}: ` +
-                `run ${totals.runKm} km, ride ${totals.rideKm} km, ${formatDuration(totals.movingSec)} moving.`,
-              ...rows.map(
-                (r) =>
-                  `- ${r.day} ${r.date}: ${r.name} (${r.sport}, id ${r.id}) · ${r.meta}`,
-              ),
-            ].join("\n");
-      return {
-        content: [{ type: "text" as const, text }],
-        structuredContent: { days, range, totals, workouts: rows },
-      };
-    },
-  );
-
-  registerAppTool(
-    server,
-    "get_workout",
-    {
-      title: "Workout detail",
-      description:
-        "One workout in full: distance, time, pace, heart rate, climb, cadence and load, the kilometre splits, the watch's laps and the GPS route. Shows a widget with the map, stats and splits. Use the id from list_recent_workouts.",
-      inputSchema: {
-        id: z.string().min(1).max(64).describe("The workout id"),
-      },
-      annotations: readOnly,
-      _meta: { ui: { resourceUri: DETAIL_URI } },
-    },
-    async ({ id }) => {
-      const client = intervalsIcuClientFromEnv();
-      try {
-        const detail = await getWorkoutDetail({ client, id });
+      async ({ days }) => {
+        const client = intervalsIcuClientFromEnv();
+        const { range, workouts } = await getRecentWorkouts({ client, days });
+        const totals = summarise(workouts);
+        const rows = workouts.map(toWorkoutRow);
+        const text =
+          workouts.length === 0
+            ? `No workouts between ${range.oldest} and ${range.newest}.`
+            : [
+                `${totals.count} workouts between ${range.oldest} and ${range.newest}: ` +
+                  `run ${totals.runKm} km, ride ${totals.rideKm} km, ${formatDuration(totals.movingSec)} moving.`,
+                ...rows.map(
+                  (r) =>
+                    `- ${r.day} ${r.date}: ${r.name} (${r.sport}, id ${r.id}) · ${r.meta}`,
+                ),
+              ].join("\n");
         return {
-          content: [
-            { type: "text" as const, text: describeWorkoutDetail(detail) },
-          ],
-          structuredContent: {
-            ...detail,
-            heading: {
-              ...toWorkoutRow(detail.workout),
-              startTime: formatStartTime(detail.workout.startLocal),
-            },
-          },
+          content: [{ type: "text" as const, text }],
+          structuredContent: { days, range, totals, workouts: rows },
         };
-      } catch (err) {
-        if (err instanceof IntervalsIcuError && err.status === 404) {
+      },
+    );
+
+    registerAppTool(
+      server,
+      "get_workout",
+      {
+        title: "Workout detail",
+        description:
+          "One workout in full: distance, time, pace, heart rate, climb, cadence and load, the kilometre splits, the watch's laps and the GPS route. Shows a widget with the map, stats and splits. Use the id from list_recent_workouts.",
+        inputSchema: {
+          id: z.string().min(1).max(64).describe("The workout id"),
+        },
+        annotations: readOnly,
+        _meta: { ui: { resourceUri: DETAIL_URI } },
+      },
+      async ({ id }) => {
+        const client = intervalsIcuClientFromEnv();
+        try {
+          const detail = await getWorkoutDetail({ client, id });
           return {
             content: [
-              { type: "text" as const, text: `No workout with id ${id}.` },
+              { type: "text" as const, text: describeWorkoutDetail(detail) },
             ],
-            isError: true,
+            structuredContent: {
+              ...detail,
+              heading: {
+                ...toWorkoutRow(detail.workout),
+                startTime: formatStartTime(detail.workout.startLocal),
+              },
+            },
           };
+        } catch (err) {
+          if (err instanceof IntervalsIcuError && err.status === 404) {
+            return {
+              content: [
+                { type: "text" as const, text: `No workout with id ${id}.` },
+              ],
+              isError: true,
+            };
+          }
+          throw err;
         }
-        throw err;
+      },
+    );
+  },
+  {
+    // One line per request in the Vercel logs: method and duration, no
+    // parameters, so a request that hangs can be named.
+    onEvent: (event) => {
+      if (event.type === "REQUEST_COMPLETED") {
+        console.log(`mcp ${event.method} ${event.duration}ms ${event.status}`);
       }
     },
-  );
-});
+  },
+);
 
 export const GET = handler;
 export const POST = handler;

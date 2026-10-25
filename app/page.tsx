@@ -49,6 +49,10 @@ export default function LandingPage() {
       </p>
 
       <p style={{ color: "var(--rs-text-secondary)", margin: 0 }}>
+        <a href="/connect/intervals" style={{ color: "inherit" }}>
+          Connect intervals.icu
+        </a>
+        {" · "}
         <a href="/privacy" style={{ color: "inherit" }}>
           Privacy policy
         </a>

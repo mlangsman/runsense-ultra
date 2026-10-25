@@ -78,6 +78,7 @@ src/services    use cases: recent workouts, one workout in detail, the Peloton s
 app/mcp         the MCP endpoint: tools and widget resources, kept thin
 app/api/cron    scheduled routes called by Vercel with the cron secret, kept thin
 app/api/webhooks the intervals.icu webhook route, a few lines of wiring
+app/connect     the intervals.icu OAuth connect flow: start, callback and the done page, a few lines each
 app/            the landing and privacy pages, the widgets (one page each) and the host bridge hook
 scripts/        developer tools, e.g. capturing a fixture from a real account
 ```
@@ -85,6 +86,10 @@ scripts/        developer tools, e.g. capturing a fixture from a real account
 ## Peloton rides
 
 Peloton pushes rides only to Strava, Garmin, Apple Health, Fitbit and WHOOP, and none of those reaches the intervals.icu API in a usable form. So a daily cron route logs in to Peloton's unofficial API with the account credentials from Vercel's settings, lists the last week's rides, skips any whose external id intervals.icu already holds, builds a TCX file with power, cadence, heart rate and speed for each new one, and uploads it. intervals.icu then holds the ride like any other, and the MCP tools need no change.
+
+## Connecting intervals.icu
+
+`/connect/intervals` sets a random state in a short-lived cookie and sends the athlete to intervals.icu to approve the app with the `ACTIVITY:READ` scope. intervals.icu returns them to `/connect/intervals/callback`, where the state is checked and the code exchanged for a token at intervals.icu's token endpoint (`src/sources/intervals-icu/oauth.ts`, `src/services/connectIntervals.ts`). The done page shows the outcome. In the single-user phase the token is discarded: the API key already reads the owner's account, and what the authorisation buys is that intervals.icu starts sending that athlete's webhooks. Phase 1 stores the token per user, encrypted.
 
 ## The email
 
