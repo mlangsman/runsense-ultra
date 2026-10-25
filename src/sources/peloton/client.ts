@@ -1,12 +1,17 @@
 /**
  * Peloton has no public API. This client speaks to the endpoints the Peloton
- * app itself uses: a username and password login that returns a session id,
- * then plain JSON reads. The password is sent once per process to obtain the
- * session and is never logged or included in an error.
+ * web app itself uses: an OAuth password grant on auth.onepeloton.com that
+ * returns a bearer token (the old /auth/login was retired in late 2025 and
+ * answers 403), then plain JSON reads on api.onepeloton.com. The password is
+ * sent once per process to obtain the token and is never logged or included
+ * in an error.
  */
 import { z } from "zod";
 
 const BASE_URL = "https://api.onepeloton.com";
+const TOKEN_URL = "https://auth.onepeloton.com/oauth/token";
+/** The Peloton web app's public OAuth client id, not a secret. */
+const CLIENT_ID = "mgsmWCD0A8Qn6uz6mmqI6qeBNHH9IPwS";
 
 export class PelotonError extends Error {
   constructor(
@@ -25,7 +30,8 @@ export interface PelotonClientOptions {
   fetch?: typeof fetch;
 }
 
-const loginResponse = z.object({ session_id: z.string(), user_id: z.string() });
+const tokenResponse = z.object({ access_token: z.string() });
+const meResponse = z.object({ id: z.string() });
 
 /** The subset of a Peloton workout we read. Unknown fields are dropped. */
 export const pelotonWorkoutSchema = z.object({
@@ -89,16 +95,19 @@ const COMMON_HEADERS = {
 
 export function createPelotonClient(options: PelotonClientOptions) {
   const doFetch = options.fetch ?? fetch;
-  let session: { cookie: string; userId: string } | null = null;
+  let session: { authorization: string; userId: string } | null = null;
 
+  /** Obtain a bearer token with the password, then the user id. Returns the id. */
   async function login(): Promise<string> {
-    const res = await doFetch(`${BASE_URL}/auth/login`, {
+    const res = await doFetch(TOKEN_URL, {
       method: "POST",
       headers: { ...COMMON_HEADERS, "content-type": "application/json" },
       body: JSON.stringify({
-        username_or_email: options.username,
+        grant_type: "password",
+        client_id: CLIENT_ID,
+        scope: "offline_access openid",
+        username: options.username,
         password: options.password,
-        with_pubsub: false,
       }),
     });
     if (!res.ok) {
@@ -107,18 +116,25 @@ export function createPelotonClient(options: PelotonClientOptions) {
         res.status,
       );
     }
-    const parsed = loginResponse.parse(await res.json());
-    session = {
-      cookie: `peloton_session_id=${parsed.session_id}`,
-      userId: parsed.user_id,
-    };
-    return parsed.user_id;
+    const token = tokenResponse.parse(await res.json());
+    const authorization = `Bearer ${token.access_token}`;
+    const me = await doFetch(`${BASE_URL}/api/me`, {
+      headers: { ...COMMON_HEADERS, authorization },
+    });
+    if (!me.ok) {
+      throw new PelotonError(
+        `Peloton responded ${me.status} for /api/me`,
+        me.status,
+      );
+    }
+    session = { authorization, userId: meResponse.parse(await me.json()).id };
+    return session.userId;
   }
 
   async function get<T>(path: string, schema: z.ZodType<T>): Promise<T> {
     if (!session) await login();
     const res = await doFetch(`${BASE_URL}${path}`, {
-      headers: { ...COMMON_HEADERS, cookie: session!.cookie },
+      headers: { ...COMMON_HEADERS, authorization: session!.authorization },
     });
     if (!res.ok) {
       throw new PelotonError(
